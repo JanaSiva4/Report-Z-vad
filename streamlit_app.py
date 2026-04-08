@@ -1,55 +1,60 @@
 import streamlit as st
 import requests
 
-# Konfigurace stránky
+# Nastavení vzhledu stránky
 st.set_page_config(page_title="Hlášení závad", page_icon="🛠")
 
 def send_to_n8n(data):
-    # Nezapomeň pak vyměnit za Production URL, až budeš mít workflow aktivované!
+    # SEM VLOŽ SVOU URL (zatím nechávám tu testovací z tvého screenshotu)
     WEBHOOK_URL = "https://n8n.dev.gcp.alza.cz/webhook-test/54ef8aa9-e750-42e2-9dad-3b4969e05053"
+    
     try:
         r = requests.post(WEBHOOK_URL, json=data)
         return r.status_code == 200
-    except:
+    except Exception as e:
+        st.error(f"Chyba spojení: {e}")
         return False
 
-st.header("🛠 Detailní hlášení závady")
+st.header("🛠 Formulář hlášení závady")
+st.info("Vyplňte údaje o závadě. Pole označená hvězdičkou (*) jsou povinná.")
 
-with st.form("service_desk", clear_on_submit=True):
-    col1, col2 = st.columns(2)
+# Samotný formulář
+with st.form("hlavni_formular", clear_on_submit=True):
     
-    with col1:
-        department = st.selectbox("Oddělení", ["Logistika", "IT", "HR", "Sales", "Provoz", "Jiné"])
-        technology = st.selectbox("Technologie", ["Hardware", "Software", "Síť", "Budova/Elektro", "Ostatní"])
+    # Volná textová pole
+    subject = st.text_input("Předmět závady *")
+    department = st.text_input("Oddělení")
+    technology = st.text_input("Technologie")
+    location = st.text_input("Místo / Lokalita")
     
-    with col2:
-        priority = st.select_slider("Priorita", options=["Low", "Medium", "High"])
-        location = st.text_input("Místnost/Lokalita")
-
-    subject = st.text_input("Stručný název závady (předmět)")
-    details = st.text_area("Detailní popis problému")
-    note = st.text_area("Poznámka pro technika (nepovinné)")
+    # Výběr priority (jediné fixní pole)
+    priority = st.selectbox("Priorita", ["Low", "Medium", "High"])
     
-    submit = st.form_submit_button("Odeslat do systému")
+    # Popisy a poznámky
+    description = st.text_area("Detailní popis závady *")
+    note = st.text_area("Zpráva / Poznámka")
+    
+    # Tlačítko pro odeslání
+    submit = st.form_submit_button("Odeslat hlášení")
 
     if submit:
-        if subject and details:
+        # Validace povinných polí
+        if subject and description:
             payload = {
+                "subject": subject,
                 "department": department,
                 "technology": technology,
-                "priority": priority,
                 "location": location,
-                "subject": subject,
-                "description": details,
-                "note": note,
-                "reporter": "Streamlit App"
+                "priority": priority,
+                "description": description,
+                "note": note
             }
             
-            with st.spinner('Odesílám...'):
+            with st.spinner('Odesílám data do systému...'):
                 if send_to_n8n(payload):
-                    st.success("✅ Hotovo! Závada byla zapsána a odeslána do Asany.")
+                    st.success("✅ Závada byla úspěšně nahlášena!")
                     st.balloons()
                 else:
-                    st.error("❌ Chyba spojení s n8n.")
+                    st.error("❌ Nepodařilo se odeslat. Zkontrolujte připojení nebo n8n.")
         else:
-            st.warning("⚠️ Vyplňte prosím alespoň Předmět a Popis.")
+            st.warning("⚠️ Prosím, vyplňte povinná pole: Předmět a Detailní popis.")
