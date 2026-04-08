@@ -1,71 +1,115 @@
 import streamlit as st
 import requests
 
-# 1. VYNUCENÍ SVĚTLÉHO REŽIMU (Light Mode)
+# Konfigurace stránky
 st.set_page_config(
-    page_title="Hlášení závad", 
+    page_title="Report závad", 
     page_icon="🛠",
     layout="centered"
 )
 
-# Trocha CSS pro zesvětlení a úpravu vzhledu
+# DESIGN: Vlastní CSS pro moderní technický vzhled
 st.markdown("""
     <style>
-        /* Vynucení světlého pozadí a tmavého písma */
+        /* Celkové pozadí aplikace (soft grey) */
         .stApp {
-            background-color: white;
-            color: black;
+            background-color: #f4f7f9;
         }
-        /* Úprava barvy nadpisů */
-        h1, h2, h3 {
-            color: #1E1E1E !important;
+        
+        /* Styl bílé karty formuláře */
+        [data-testid="stForm"] {
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 40px;
+            border: 1px solid #e1e4e8;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
         }
-        /* Styl pro tlačítko */
+        
+        /* Úprava nadpisu */
+        .main-title {
+            color: #1a1c23;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Styl tlačítek */
         .stButton>button {
-            background-color: #0078D4;
+            width: 100%;
+            background-color: #2563eb;
             color: white;
-            border-radius: 5px;
+            border-radius: 8px;
+            padding: 12px;
+            font-weight: 600;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .stButton>button:hover {
+            background-color: #1d4ed8;
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Vizuální oddělovač */
+        hr {
+            margin-top: 25px;
+            margin-bottom: 25px;
+            border: 0;
+            border-top: 1px solid #eee;
         }
     </style>
 """, unsafe_allow_html=True)
 
 def send_to_n8n(data):
-    # Tady si dej svou URL
+    # TVOJE URL Z n8n
     WEBHOOK_URL = "https://n8n.dev.gcp.alza.cz/webhook-test/54ef8aa9-e750-42e2-9dad-3b4969e05053"
     try:
-        r = requests.post(WEBHOOK_URL, json=data)
+        r = requests.post(WEBHOOK_URL, json=data, timeout=10)
         return r.status_code == 200
-    except Exception as e:
-        st.error(f"Chyba spojení: {e}")
+    except:
         return False
 
-st.header("🛠 Formulář hlášení závady")
-st.write("Pro nahlášení nové závady vyplňte prosím následující pole.")
+# Hlavička aplikace
+st.markdown('<div class="main-title">🛠 Technický report závady</div>', unsafe_allow_html=True)
+st.write("Vyplňte prosím detaily závady pro servisní tým.")
 
-with st.form("hlavni_formular", clear_on_submit=True):
+# Formulář
+with st.form("service_desk", clear_on_submit=True):
     
-    # Textová pole (volné psaní)
-    subject = st.text_input("Předmět závady *")
-    department = st.text_input("Oddělení")
-    technology = st.text_input("Technologie")
-    location = st.text_input("Místo / Lokalita")
+    # První řada: Předmět a Lokalita
+    col1, col2 = st.columns(2)
+    with col1:
+        subject = st.text_input("Předmět závady *")
+    with col2:
+        location = st.text_input("Místo / Lokalita")
+
+    # Druhá řada: Oddělení a Technologie
+    col3, col4 = st.columns(2)
+    with col3:
+        department = st.text_input("Oddělení")
+    with col4:
+        technology = st.text_input("Technologie")
     
-    # Výběr priority
+    # Třetí řada: Priorita
     priority = st.selectbox("Priorita", ["Low", "Medium", "High"], index=1)
     
-    # Velká pole
-    description = st.text_area("Detailní popis závady *")
-    note = st.text_area("Zpráva / Poznámka")
+    # Textové oblasti
+    description = st.text_area("Detailní popis závady *", help="Popište, co přesně nefunguje.")
+    note = st.text_area("Poznámka / Zpráva (volitelné)")
     
-    submit = st.form_submit_button("Odeslat hlášení")
+    st.markdown("<hr>", unsafe_allow_html=True)
+    
+    submit = st.form_submit_button("ODESLAT DO SYSTÉMU")
 
     if submit:
         if subject and description:
             payload = {
                 "subject": subject,
+                "location": location,
                 "department": department,
                 "technology": technology,
-                "location": location,
                 "priority": priority,
                 "description": description,
                 "note": note
@@ -73,8 +117,9 @@ with st.form("hlavni_formular", clear_on_submit=True):
             
             with st.spinner('Odesílám...'):
                 if send_to_n8n(payload):
-                    st.success("✅ Odesláno! Data byla zapsána.")
+                    st.success("✅ Závada byla úspěšně nahlášena.")
+                    st.balloons()
                 else:
-                    st.error("❌ Nepodařilo se odeslat.")
+                    st.error("❌ Došlo k chybě při odesílání. Prověřte n8n.")
         else:
-            st.warning("⚠️ Vyplňte povinná pole (předmět a popis).")
+            st.warning("⚠️ Předmět a Popis jsou povinná pole.")
