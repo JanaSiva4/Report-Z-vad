@@ -82,7 +82,11 @@ with st.form("service_desk", clear_on_submit=True):
                 "note": note
             }
             if send_to_n8n(payload):
-                st.success("✅ Odesláno!")
-                st.balloons()
+    progress_bar = st.progress(0)
+    for percent_complete in range(100):
+        time.sleep(0.01)
+        progress_bar.progress(percent_complete + 1)
+    st.success("✅ Data byla úspěšně zapsána do systému.")
+                
             else:
                 st.error("❌ Chyba odesílání.")
