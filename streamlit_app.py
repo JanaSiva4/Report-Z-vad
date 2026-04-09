@@ -87,6 +87,6 @@ with st.form("service_desk", clear_on_submit=True):
         time.sleep(0.01)
         progress_bar.progress(percent_complete + 1)
     st.success("✅ Data byla úspěšně zapsána do systému.")
-                
+            }  
             else:
                 st.error("❌ Chyba odesílání.")
