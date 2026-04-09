@@ -41,7 +41,7 @@ st.markdown("""
 
 def send_to_n8n(data):
     # TVOJE URL Z n8n
-    WEBHOOK_URL = "https://n8n.dev.gcp.alza.cz/webhook-test/54ef8aa9-e750-42e2-9dad-3b4969e05053"
+    WEBHOOK_URL = "https://n8n.dev.gcp.alza.cz/webhook-test/54ef8aa9-e750-4e22-9dad-3b4969e05053"
     try:
         r = requests.post(WEBHOOK_URL, json=data, timeout=10)
         return r.status_code == 200
