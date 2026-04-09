@@ -81,8 +81,6 @@ with st.form("service_desk", clear_on_submit=True):
                 "description": description,
                 "note": note
             }
-            if send_to_n8n(payload):
-    st.success("✅ Odesláno!")
-    st.snow() 
+
             else:
                 st.error("❌ Chyba odesílání.")
