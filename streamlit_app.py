@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import time  # Důležité pro ten progress bar!
 
 # Konfigurace stránky
 st.set_page_config(
@@ -8,15 +9,13 @@ st.set_page_config(
     layout="centered"
 )
 
-# DESIGN: Agresivnější CSS, které přebije systémové nastavení
+# DESIGN: CSS pro profesionální vzhled
 st.markdown("""
     <style>
-        /* Vynucení šedého pozadí na celou plochu */
         .stApp {
             background-color: #f4f7f9 !important;
         }
         
-        /* Bílá karta pro formulář */
         [data-testid="stForm"] {
             background-color: #ffffff !important;
             border-radius: 12px !important;
@@ -25,23 +24,22 @@ st.markdown("""
             box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important;
         }
 
-        /* Zajištění, aby text nebyl bílý na bílém */
         .stMarkdown, p, span, label {
             color: #1a1c23 !important;
         }
 
-        /* Tlačítko */
         .stButton>button {
             background-color: #2563eb !important;
             color: white !important;
             border: none !important;
+            width: 100%;
         }
     </style>
 """, unsafe_allow_html=True)
 
 def send_to_n8n(data):
-    # TVOJE URL Z n8n
-    WEBHOOK_URL = "https://n8n.dev.gcp.alza.cz/webhook-test/54ef8aa9-e750-4e22-9dad-3b4969e05053"
+    # POUŽÍVÁME PRODUCTION URL (bez -test), aby to běželo i bez zapnutého n8n editoru
+    WEBHOOK_URL = "https://n8n.dev.gcp.alza.cz/webhook/54ef8aa9-e750-4e22-9dad-3b4969e05053"
     try:
         r = requests.post(WEBHOOK_URL, json=data, timeout=10)
         return r.status_code == 200
@@ -50,6 +48,7 @@ def send_to_n8n(data):
 
 st.title("🛠 Technický report závady")
 
+# Začátek formuláře
 with st.form("service_desk", clear_on_submit=True):
     col1, col2 = st.columns(2)
     with col1:
@@ -81,49 +80,18 @@ with st.form("service_desk", clear_on_submit=True):
                 "description": description,
                 "note": note
             }
-st.markdown("---")
-    submit = st.form_submit_button("ODESLAT REPORT")
-
-    if submit:
-        # Kontrola, zda jsou vyplněna povinná pole
-        if subject and description:
-            payload = {
-                "subject": subject,
-                "location": location,
-                "department": department,
-                "technology": technology,
-                "priority": priority,
-                "description": description,
-                "note": note
-            }
-
-st.markdown("---")
-    submit = st.form_submit_button("ODESLAT REPORT")
-
-    if submit:
-        # Kontrola, zda jsou vyplněna povinná pole
-        if subject and description:
-            payload = {
-                "subject": subject,
-                "location": location,
-                "department": department,
-                "technology": technology,
-                "priority": priority,
-                "description": description,
-                "note": note
-            }
 
             # Samotné odeslání do n8n
             if send_to_n8n(payload):
-                # Efektní progress bar pro techniky
+                # Efektní technický progress bar
                 progress_bar = st.progress(0)
                 for percent_complete in range(100):
                     time.sleep(0.01)
                     progress_bar.progress(percent_complete + 1)
                 
                 st.success("✅ Data byla úspěšně zapsána do systému.")
+                st.toast('Report odeslán do Asany', icon='🚀')
             else:
-                st.error("❌ Chyba odesílání.")
+                st.error("❌ Chyba odesílání. Zkontrolujte VPN / n8n status.")
         else:
-            # Varování, pokud zapomenou vyplnit základní věci
             st.warning("⚠️ Prosím vyplňte Předmět a Popis závady.")
