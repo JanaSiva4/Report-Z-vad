@@ -52,15 +52,13 @@ st.title("🛠 Technický report závady")
 with st.form("service_desk", clear_on_submit=True):
     col1, col2 = st.columns(2)
     with col1:
-        subject = st.text_input("Předmět závady *")
+        subject = st.text_input("Oddělení")
     with col2:
-        location = st.text_input("Místo / Lokalita")
+        location = st.text_input("Technologie")
 
     col3, col4 = st.columns(2)
     with col3:
-        department = st.text_input("Oddělení")
-    with col4:
-        technology = st.text_input("Technologie")
+        department = st.text_input("Místo / Lokace")
     
     priority = st.selectbox("Priorita", ["Low", "Medium", "High"], index=1)
     description = st.text_area("Detailní popis závady *")
