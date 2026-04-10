@@ -9,34 +9,34 @@ st.set_page_config(
     layout="centered"
 )
 
-# 2. DESIGN: CSS (vylepšený vzhled a větší okna)
+# 2. DESIGN: Profesionální a čistý
 st.markdown("""
     <style>
         .stApp {
-            background: linear-gradient(to bottom, #f0f4f8, #d9e2ec) !important;
+            background-color: #f8fafc !important;
         }
         
         [data-testid="stForm"] {
             background-color: #ffffff !important;
-            border-radius: 15px !important;
+            border-radius: 8px !important;
             padding: 3rem !important;
-            border: none !important;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1) !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
         }
 
         h1 {
-            color: #102a43 !important;
+            color: #1e293b !important;
             font-weight: 700 !important;
         }
 
-        /* Styl pro tlačítko */
         .stButton>button {
-            background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%) !important;
+            background-color: #2563eb !important;
             color: white !important;
-            border-radius: 8px !important;
+            border-radius: 6px !important;
             font-weight: 600 !important;
-            height: 3.5em !important;
+            height: 3em !important;
             width: 100% !important;
+            border: none !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -51,28 +51,25 @@ def send_to_n8n(data):
 
 # 3. OBSAH STRÁNKY
 st.title("🛠️ Technický report závady")
-st.markdown("Vyplňte prosím údaje o závadě. Kolegové v Teams budou ihned informováni.")
+st.markdown("Vyplňte prosím technické parametry závady. Informace budou okamžitě odeslány k řešení.")
 
 with st.form("service_desk", clear_on_submit=True):
-    # První řádek
     col1, col2 = st.columns(2)
     with col1:
         department = st.text_input("📍 1. Oddělení")
     with col2:
         technology = st.text_input("⚙️ 2. Technologie")
 
-    # Druhý řádek
     col3, col4 = st.columns(2)
     with col3:
         location = st.text_input("🏢 3. Místo / Lokace")
     with col4:
-        priority = st.selectbox("⚡ 4. Priorita", ["Nízká", "Střední", "Vysoká"], index=1)
+        # Priority v angličtině dle požadavku
+        priority = st.selectbox("⚡ 4. Priority", ["Low", "Medium", "High"], index=1)
     
-    # Velké textové pole pro popis
-    description = st.text_area("📝 Detailní popis závady *", height=250, placeholder="Co přesně nefunguje?")
-    
-    # Menší pole pro poznámku
-    note = st.text_area("💡 Dodatečná poznámka (volitelné)", height=100)
+    # Velké okno pro popis
+    description = st.text_area("📝 Detailní popis závady *", height=220, placeholder="Popište technický problém...")
+    note = st.text_area("💡 Dodatečná poznámka (volitelné)", height=80)
     
     st.markdown("<br>", unsafe_allow_html=True)
     submit = st.form_submit_button("ODESLAT HLÁŠENÍ")
@@ -89,15 +86,15 @@ with st.form("service_desk", clear_on_submit=True):
             }
 
             if send_to_n8n(payload):
+                # Pouze progress bar bez balónků
                 progress_bar = st.progress(0)
                 for p in range(100):
                     time.sleep(0.005)
                     progress_bar.progress(p + 1)
                 
-                st.balloons()
-                st.success("Skvělé! Vaše hlášení jsme přijali a kolegové v Teams už o něm vědí.")
-                st.info("Souhrnný report všech oprav proběhne automaticky zítra v 08:00.")
+                st.success("✅ Hlášení bylo úspěšně odesláno.")
+                st.info("Záznam byl vytvořen a odeslán do kanálu Teams. Souhrnný report proběhne v 08:00.")
             else:
-                st.error("Něco se nepovedlo. Zkontrolujte připojení k Alza síti (VPN).")
+                st.error("❌ Chyba spojení. Zkontrolujte připojení k Alza síti (VPN).")
         else:
-            st.warning("Bez popisu závady se nehneme. Prosím, doplňte jej.")
+            st.warning("⚠️ Pole 'Detailní popis závady' je povinné.")
