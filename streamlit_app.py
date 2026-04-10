@@ -70,10 +70,9 @@ with st.form("service_desk", clear_on_submit=True):
     if submit:
         if subject and description:
             payload = {
-                "subject": subject,
-                "location": location,
                 "department": department,
                 "technology": technology,
+                "location": location,
                 "priority": priority,
                 "description": description,
                 "note": note
