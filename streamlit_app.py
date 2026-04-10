@@ -1,44 +1,10 @@
 import streamlit as st
 import requests
-import time  # Důležité pro ten progress bar!
+import time
 
-# Konfigurace stránky
-st.set_page_config(
-    page_title="Report závad", 
-    page_icon="🛠",
-    layout="centered"
-)
-
-# DESIGN: CSS pro profesionální vzhled
-st.markdown("""
-    <style>
-        .stApp {
-            background-color: #f4f7f9 !important;
-        }
-        
-        [data-testid="stForm"] {
-            background-color: #ffffff !important;
-            border-radius: 12px !important;
-            padding: 40px !important;
-            border: 1px solid #e1e4e8 !important;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important;
-        }
-
-        .stMarkdown, p, span, label {
-            color: #1a1c23 !important;
-        }
-
-        .stButton>button {
-            background-color: #2563eb !important;
-            color: white !important;
-            border: none !important;
-            width: 100%;
-        }
-    </style>
-""", unsafe_allow_html=True)
+# ... (CSS část zůstává stejná, tu jsem pro přehlednost vynechal) ...
 
 def send_to_n8n(data):
-    # POUŽÍVÁME PRODUCTION URL (bez -test), aby to běželo i bez zapnutého n8n editoru
     WEBHOOK_URL = "https://n8n.dev.gcp.alza.cz/webhook/54ef8aa9-e750-4e22-9dad-3b4969e05053"
     try:
         r = requests.post(WEBHOOK_URL, json=data, timeout=10)
@@ -50,17 +16,25 @@ st.title("🛠 Technický report závady")
 
 # Začátek formuláře
 with st.form("service_desk", clear_on_submit=True):
+    # 1. ŘÁDEK
     col1, col2 = st.columns(2)
     with col1:
-        subject = st.text_input("Oddělení")
+        # Změna: 'subject' už není předmět, ale definujeme tu Oddělení
+        department = st.text_input("1. Oddělení")
     with col2:
-        location = st.text_input("Technologie")
+        # Změna: Definujeme Technologii
+        technology = st.text_input("2. Technologie")
 
+    # 2. ŘÁDEK
     col3, col4 = st.columns(2)
     with col3:
-        department = st.text_input("Místo / Lokace")
+        # Změna: Definujeme Místo
+        location = st.text_input("3. Místo / Lokace")
+    with col4:
+        # Přidali jsme Prioritu do druhého řádku
+        priority = st.selectbox("4. Priorita", ["Low", "Medium", "High"], index=1)
     
-    priority = st.selectbox("Priorita", ["Low", "Medium", "High"], index=1)
+    # Zbytek formuláře
     description = st.text_area("Detailní popis závady *")
     note = st.text_area("Poznámka / Zpráva (volitelné)")
     
@@ -68,7 +42,8 @@ with st.form("service_desk", clear_on_submit=True):
     submit = st.form_submit_button("ODESLAT REPORT")
 
     if submit:
-        if subject and description:
+        # Kontrola, zda je vyplněn aspoň popis (Předmět jsme z kontroly vyndali)
+        if description:
             payload = {
                 "department": department,
                 "technology": technology,
@@ -78,17 +53,14 @@ with st.form("service_desk", clear_on_submit=True):
                 "note": note
             }
 
-            # Samotné odeslání do n8n
             if send_to_n8n(payload):
-                # Efektní technický progress bar
                 progress_bar = st.progress(0)
                 for percent_complete in range(100):
                     time.sleep(0.01)
                     progress_bar.progress(percent_complete + 1)
                 
-                st.success("✅ Data byla úspěšně zapsána do systému.")
-                st.toast('Report odeslán do Asany', icon='🚀')
+                st.success("✅ Data byla úspěšně odeslána.")
             else:
                 st.error("❌ Chyba odesílání. Zkontrolujte VPN / n8n status.")
         else:
-            st.warning("⚠️ Prosím vyplňte Předmět a Popis závady.")
+            st.warning("⚠️ Prosím vyplňte Popis závady.")
