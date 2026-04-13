@@ -4,7 +4,7 @@ import time
 
 # 1. NASTAVENÍ STRÁNKY
 st.set_page_config(
-    page_title="Hlášení technických závad", 
+    page_title="Maintenance helpdesk", 
     page_icon="🛠️",
     layout="centered"
 )
