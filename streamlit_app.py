@@ -150,6 +150,6 @@ with st.form("service_desk", clear_on_submit=True):
                     time.sleep(0.005)
                     progress_bar.progress(p + 1)
                 st.success("✅ Report submitted successfully.")
-                st.info("The record has been created and sent to the Teams channel. A summary report will be generated at 07:00.")
+                st.info("The record has been created and sent to the Teams channel.")
             else:
                 st.error("❌ Connection error. Please check your connection to the Alza network (VPN).")
