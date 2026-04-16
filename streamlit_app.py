@@ -105,7 +105,7 @@ with st.form("service_desk", clear_on_submit=True):
 
     col3, col4 = st.columns(2)
     with col3:
-        location = st.text_input("🏢 3. Location")
+        location = st.text_input("🏢 3. Location*")
     with col4:
         priority = st.selectbox("⚡ 4. Priority", ["Low", "Medium", "High"], index=1)
 
