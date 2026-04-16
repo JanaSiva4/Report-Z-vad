@@ -39,6 +39,40 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Seznamy
+DEPARTMENTS = [
+    "předák balení F1",
+    "předák balení F2",
+    "předák AS",
+    "předák nakládka F1",
+    "předák nakládka F2",
+    "předák doplňování F2",
+    "předák SPO",
+    "předák BPO",
+    "VS příjem",
+    "VS potvrzování",
+    "VS balení",
+    "VS pick AS",
+    "VS nakládka",
+    "Specialista AS"
+]
+
+TECHNOLOGIES = [
+    "AS",
+    "TMT",
+    "Innotech",
+    "Knapp",
+    "SSI",
+    "ElVy",
+    "Robopal",
+    "Ropaso",
+    "Intralox",
+    "Ranpak closer",
+    "Lantech erector",
+    "Gaty",
+    "Budova"
+]
+
 def send_to_n8n(data):
     WEBHOOK_URL = "https://n8n.dev.gcp.alza.cz/webhook/54ef8aa9-e750-4e22-9dad-3b4969e05053"
     try:
@@ -57,9 +91,17 @@ with st.form("service_desk", clear_on_submit=True):
 
     col1, col2 = st.columns(2)
     with col1:
-        department = st.text_input("📍 1. Department")
+        department = st.selectbox(
+            "📍 1. Department *",
+            options=[""] + DEPARTMENTS,
+            index=0
+        )
     with col2:
-        technology = st.text_input("⚙️ 2. Technology")
+        technology = st.selectbox(
+            "⚙️ 2. Technology *",
+            options=[""] + TECHNOLOGIES,
+            index=0
+        )
 
     col3, col4 = st.columns(2)
     with col3:
@@ -69,7 +111,6 @@ with st.form("service_desk", clear_on_submit=True):
 
     description = st.text_area("📝 Detailed fault description *", height=220, placeholder="Describe the technical issue...")
     note = st.text_area("💡 Additional note (optional)", height=80)
-
     attachment = st.file_uploader("📎 Attachment (optional)", type=["jpg", "jpeg", "png", "pdf"])
 
     st.markdown("<br>", unsafe_allow_html=True)
@@ -78,6 +119,10 @@ with st.form("service_desk", clear_on_submit=True):
     if submit:
         if not reported_by:
             st.warning("⚠️ Please fill in your name.")
+        elif not department:
+            st.warning("⚠️ Please select a department.")
+        elif not technology:
+            st.warning("⚠️ Please select a technology.")
         elif not description:
             st.warning("⚠️ The 'Detailed fault description' field is required.")
         else:
@@ -104,7 +149,6 @@ with st.form("service_desk", clear_on_submit=True):
                 for p in range(100):
                     time.sleep(0.005)
                     progress_bar.progress(p + 1)
-
                 st.success("✅ Report submitted successfully.")
                 st.info("The record has been created and sent to the Teams channel. A summary report will be generated at 07:00.")
             else:
