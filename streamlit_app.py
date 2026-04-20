@@ -56,8 +56,7 @@ DEPARTMENTS = [
     "VS nakládka",
     "Specialista AS",
     "Specialista IT",
-    "Vedení LC",
-    "➕ Jiné / Other"
+    "Vedení LC"
 ]
 
 TECHNOLOGIES = [
@@ -73,8 +72,7 @@ TECHNOLOGIES = [
     "Ranpak closer",
     "Lantech erector",
     "Gaty",
-    "Budova",
-    "➕ Jiné / Other"
+    "Budova"
 ]
 
 def send_to_n8n(data):
