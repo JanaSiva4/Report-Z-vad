@@ -54,9 +54,9 @@ DEPARTMENTS = [
     "VS balení",
     "VS pick AS",
     "VS nakládka",
-    "Specialista AS"
-    "Specialista IT"
-    "Vedení LC"
+    "Specialista AS",
+    "Specialista IT",
+    "Vedení LC",
 ]
 
 TECHNOLOGIES = [
