@@ -57,6 +57,7 @@ DEPARTMENTS = [
     "Specialista AS",
     "Specialista IT",
     "Vedení LC",
+    "➕ Jiné / Other"
 ]
 
 TECHNOLOGIES = [
@@ -72,7 +73,8 @@ TECHNOLOGIES = [
     "Ranpak closer",
     "Lantech erector",
     "Gaty",
-    "Budova"
+    "Budova",
+    "➕ Jiné / Other"
 ]
 
 def send_to_n8n(data):
@@ -93,21 +95,30 @@ with st.form("service_desk", clear_on_submit=True):
 
     col1, col2 = st.columns(2)
     with col1:
-        department = st.selectbox(
+        department_select = st.selectbox(
             "📍 1. Department *",
             options=[""] + DEPARTMENTS,
             index=0
         )
+        if department_select == "➕ Jiné / Other":
+            department_custom = st.text_input("Enter department / Zadejte oddělení")
+        else:
+            department_custom = ""
+
     with col2:
-        technology = st.selectbox(
+        technology_select = st.selectbox(
             "⚙️ 2. Technology *",
             options=[""] + TECHNOLOGIES,
             index=0
         )
+        if technology_select == "➕ Jiné / Other":
+            technology_custom = st.text_input("Enter technology / Zadejte technologii")
+        else:
+            technology_custom = ""
 
     col3, col4 = st.columns(2)
     with col3:
-        location = st.text_input("🏢 3. Location*")
+        location = st.text_input("🏢 3. Location *")
     with col4:
         priority = st.selectbox("⚡ 4. Priority", ["Low", "Medium", "High"], index=1)
 
@@ -119,12 +130,17 @@ with st.form("service_desk", clear_on_submit=True):
     submit = st.form_submit_button("SUBMIT REPORT")
 
     if submit:
+        department = department_custom if department_select == "➕ Jiné / Other" else department_select
+        technology = technology_custom if technology_select == "➕ Jiné / Other" else technology_select
+
         if not reported_by:
             st.warning("⚠️ Please fill in your name.")
         elif not department:
-            st.warning("⚠️ Please select a department.")
+            st.warning("⚠️ Please select or enter a department.")
         elif not technology:
-            st.warning("⚠️ Please select a technology.")
+            st.warning("⚠️ Please select or enter a technology.")
+        elif not location:
+            st.warning("⚠️ Please fill in the location.")
         elif not description:
             st.warning("⚠️ The 'Detailed fault description' field is required.")
         else:
