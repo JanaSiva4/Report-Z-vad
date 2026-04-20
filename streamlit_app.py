@@ -57,6 +57,15 @@ DEPARTMENTS = [
     "Specialista AS",
     "Specialista IT",
     "Vedení LC",
+    "➕ Jiné / Other"
+]
+
+department_select = st.selectbox("📍 1. Department *", options=[""] + DEPARTMENTS)
+
+if department_select == "➕ Jiné / Other":
+    department = st.text_input("Zadejte oddělení / Enter department")
+else:
+    department = department_select
 ]
 
 TECHNOLOGIES = [
