@@ -39,7 +39,7 @@ st.markdown("""
     footer {visibility: hidden;}
     [data-testid="stDecoration"] {display: none;}
     [data-testid="stStatusWidget"] {display: none;}
-    .block-container { padding-top: 1.2rem !important; padding-bottom: 2rem !important; }
+    .block-container { padding-top: 5rem !important; padding-bottom: 2rem !important; }
     [data-testid="stForm"] {
         background-color: #ffffff !important;
         border-radius: 10px !important;
