@@ -90,7 +90,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# NAVIGACE — tvoje původní
+# NAVIGACE
 _, nav_center, _ = st.columns([1, 2, 1])
 with nav_center:
     nav_col1, nav_col2 = st.columns(2)
@@ -112,8 +112,8 @@ st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 if st.session_state.page == "form":
     _, center, _ = st.columns([1, 2, 1])
     with center:
-         st.markdown("<h1 style='text-align:center'>🛠️ Technical Fault Report</h1>", unsafe_allow_html=True)
-         st.markdown("<p style='text-align:center;color:#64748b'>Please fill in the technical details of the issue. The information will be immediately sent for resolution.</p>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align:center'>🛠️ Technical Fault Report</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center;color:#64748b;margin-bottom:1.5rem'>Please fill in the technical details of the issue. The information will be immediately sent for resolution.</p>", unsafe_allow_html=True)
 
         with st.form("service_desk", clear_on_submit=True):
             reported_by = st.text_input("👤 Reported by *")
@@ -213,8 +213,6 @@ elif st.session_state.page == "dashboard":
                     df[col] = pd.to_datetime(df[col], errors="coerce", utc=True)
                     df[col] = df[col].dt.tz_convert("Europe/Prague")
             df["datum"] = df["Čas nahlášení"].dt.date
-            df["hodina"] = df["Čas nahlášení"].dt.hour
-            df["den_tydne_num"] = df["Čas nahlášení"].dt.dayofweek
             df["den_tydne"] = df["Čas nahlášení"].dt.day_name()
             df["vyreseno"] = df["Čas vyřešení"].notna()
             df["doba_reakce_min"] = (df["Čas reakce"] - df["Čas nahlášení"]).dt.total_seconds() / 60
@@ -324,7 +322,6 @@ elif st.session_state.page == "dashboard":
 
     st.markdown("---")
 
-    # GRAFY řada 1
     col_g1, col_g2, col_g3 = st.columns([2, 1, 1])
     with col_g1:
         st.markdown("**📈 Závady za den**")
@@ -354,7 +351,6 @@ elif st.session_state.page == "dashboard":
         st.plotly_chart(fig_week, use_container_width=True)
         st.caption(f"🔴 Nejvíce závad: **{max_day}**")
 
-    # GRAFY řada 2
     col_g4, col_g5, col_g6 = st.columns(3)
     with col_g4:
         st.markdown("**⚡ Podle priority**")
