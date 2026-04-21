@@ -40,7 +40,7 @@ st.markdown("""
     [data-testid="stDecoration"] {display: none;}
     [data-testid="stStatusWidget"] {display: none;}
     .stApp { background-color: #f8fafc !important; }
-    .block-container { padding-top: 1.5rem !important; padding-bottom: 2rem !important; }
+    .block-container { padding-top: 1.2rem !important; padding-bottom: 2rem !important; }
     [data-testid="stForm"] {
         background-color: #ffffff !important;
         border-radius: 10px !important;
@@ -51,9 +51,24 @@ st.markdown("""
     .stButton>button {
         border-radius: 8px !important;
         font-weight: 600 !important;
-        height: 3em !important;
+        height: 2.8em !important;
         width: 100% !important;
-        transition: all 0.15s !important;
+        border: none !important;
+        background: transparent !important;
+        color: #64748b !important;
+        font-size: 14px !important;
+    }
+    .stButton>button:hover {
+        background: white !important;
+        color: #1e293b !important;
+    }
+    .nav-wrap {
+        display: flex;
+        gap: 4px;
+        background: #e2e8f0;
+        padding: 4px;
+        border-radius: 12px;
+        margin-bottom: 20px;
     }
     .metric-box {
         background: white;
@@ -67,14 +82,20 @@ st.markdown("""
     .metric-num-red { font-size: 1.8rem; font-weight: 700; color: #dc2626; }
     .metric-num-blue { font-size: 1.8rem; font-weight: 700; color: #2563eb; }
     .metric-lbl { font-size: 0.78rem; color: #64748b; margin-top: 2px; }
+    div[data-testid="stHorizontalBlock"] > div > div > button[kind="primary"] {
+        background: white !important;
+        color: #1e293b !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# NAVIGACE
+# NAVIGACE — pill style
+st.markdown('<div class="nav-wrap">', unsafe_allow_html=True)
 col1, col2 = st.columns(2)
 with col1:
     btn_form = st.button(
-        "🛠️  Formulář hlášení závad",
+        "🛠️  Formulář",
         use_container_width=True,
         type="primary" if st.session_state.page == "form" else "secondary"
     )
@@ -84,6 +105,7 @@ with col2:
         use_container_width=True,
         type="primary" if st.session_state.page == "dashboard" else "secondary"
     )
+st.markdown('</div>', unsafe_allow_html=True)
 
 if btn_form:
     st.session_state.page = "form"
@@ -91,8 +113,6 @@ if btn_form:
 if btn_dash:
     st.session_state.page = "dashboard"
     st.rerun()
-
-st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
 
 # ==================== FORMULÁŘ ====================
 if st.session_state.page == "form":
