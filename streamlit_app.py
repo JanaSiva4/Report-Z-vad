@@ -4,6 +4,8 @@ import time
 import base64
 import pandas as pd
 from datetime import datetime, timedelta
+import plotly.express as px
+import plotly.graph_objects as go
 
 st.set_page_config(
     page_title="Maintenance Helpdesk CZLC4",
@@ -55,8 +57,19 @@ st.markdown("""
         font-weight: 600 !important;
         height: 2.8em !important;
         width: 100% !important;
-        border: none !important;
         font-size: 14px !important;
+        border: 1.5px solid #e2e8f0 !important;
+        background: white !important;
+        color: #475569 !important;
+    }
+    .stButton>button:hover {
+        background: #f1f5f9 !important;
+        color: #1e293b !important;
+    }
+    .btn-active>div>button {
+        background: #2563eb !important;
+        color: white !important;
+        border-color: #2563eb !important;
     }
     .metric-box {
         background: white;
@@ -70,20 +83,27 @@ st.markdown("""
     .metric-num-red { font-size: 1.6rem; font-weight: 700; color: #dc2626; }
     .metric-num-blue { font-size: 1.6rem; font-weight: 700; color: #2563eb; }
     .metric-num-purple { font-size: 1.6rem; font-weight: 700; color: #7c3aed; }
-    .metric-num-orange { font-size: 1.6rem; font-weight: 700; color: #ea580c; }
     .metric-lbl { font-size: 0.72rem; color: #64748b; margin-top: 2px; }
     .metric-desc { font-size: 0.65rem; color: #94a3b8; margin-top: 3px; font-style: italic; }
 </style>
 """, unsafe_allow_html=True)
 
-# NAVIGACE
+# NAVIGACE — bez červené
 nav_col1, nav_col2, nav_col3 = st.columns([1, 1, 6])
+
 with nav_col1:
-    btn_form = st.button("🛠️ Formulář", use_container_width=True,
-        type="primary" if st.session_state.page == "form" else "secondary")
+    if st.session_state.page == "form":
+        st.markdown('<div class="btn-active">', unsafe_allow_html=True)
+    btn_form = st.button("🛠️ Formulář", use_container_width=True, key="nav_form")
+    if st.session_state.page == "form":
+        st.markdown('</div>', unsafe_allow_html=True)
+
 with nav_col2:
-    btn_dash = st.button("📊 Power BI Dashboard", use_container_width=True,
-        type="primary" if st.session_state.page == "dashboard" else "secondary")
+    if st.session_state.page == "dashboard":
+        st.markdown('<div class="btn-active">', unsafe_allow_html=True)
+    btn_dash = st.button("📊 Power BI Dashboard", use_container_width=True, key="nav_dash")
+    if st.session_state.page == "dashboard":
+        st.markdown('</div>', unsafe_allow_html=True)
 
 if btn_form:
     st.session_state.page = "form"
@@ -202,7 +222,6 @@ elif st.session_state.page == "dashboard":
         st.warning("Žádná data k zobrazení.")
         st.stop()
 
-    # FILTRY
     st.markdown("### 📊 Power BI Dashboard — CZLC4")
     col_f1, col_f2, col_f3, col_f4 = st.columns(4)
     with col_f1:
@@ -225,13 +244,11 @@ elif st.session_state.page == "dashboard":
     if days_filter == "Posledních 7 dní":
         cutoff = pd.Timestamp.now(tz="Europe/Prague") - timedelta(days=7)
         dff = dff[dff["Čas nahlášení"] >= cutoff]
-        prev_cutoff = cutoff - timedelta(days=7)
-        prev = df[(df["Čas nahlášení"] >= prev_cutoff) & (df["Čas nahlášení"] < cutoff)]
+        prev = df[(df["Čas nahlášení"] >= cutoff - timedelta(days=7)) & (df["Čas nahlášení"] < cutoff)]
     elif days_filter == "Posledních 30 dní":
         cutoff = pd.Timestamp.now(tz="Europe/Prague") - timedelta(days=30)
         dff = dff[dff["Čas nahlášení"] >= cutoff]
-        prev_cutoff = cutoff - timedelta(days=30)
-        prev = df[(df["Čas nahlášení"] >= prev_cutoff) & (df["Čas nahlášení"] < cutoff)]
+        prev = df[(df["Čas nahlášení"] >= cutoff - timedelta(days=30)) & (df["Čas nahlášení"] < cutoff)]
     else:
         prev = pd.DataFrame()
 
@@ -244,7 +261,6 @@ elif st.session_state.page == "dashboard":
     sla = round(dff["sla_splneno"].sum() / total * 100, 1) if total > 0 else 0
     trend = len(dff) - len(prev) if not prev.empty else None
 
-    # METRIKY — 7 karet s popisky
     st.markdown("---")
     m1, m2, m3, m4, m5, m6, m7 = st.columns(7)
 
@@ -257,7 +273,7 @@ elif st.session_state.page == "dashboard":
     m2.markdown(f"""<div class='metric-box'>
         <div class='metric-num-green'>{vyreseno}</div>
         <div class='metric-lbl'>✅ Vyřešeno ({pct} %)</div>
-        <div class='metric-desc'>Závady označené jako hotovo/vyřešeno</div>
+        <div class='metric-desc'>Závady označené jako hotovo / vyřešeno</div>
     </div>""", unsafe_allow_html=True)
 
     m3.markdown(f"""<div class='metric-box'>
@@ -269,19 +285,19 @@ elif st.session_state.page == "dashboard":
     m4.markdown(f"""<div class='metric-box'>
         <div class='metric-num-blue'>{round(avg_reakce,1) if not pd.isna(avg_reakce) else '—'} min</div>
         <div class='metric-lbl'>⏱️ Prům. reakce</div>
-        <div class='metric-desc'>Průměrná doba od nahlášení do první odpovědi technika</div>
+        <div class='metric-desc'>Od nahlášení do první odpovědi technika</div>
     </div>""", unsafe_allow_html=True)
 
     m5.markdown(f"""<div class='metric-box'>
         <div class='metric-num-blue'>{round(avg_oprava,1) if not pd.isna(avg_oprava) else '—'} min</div>
         <div class='metric-lbl'>🔧 Prům. oprava</div>
-        <div class='metric-desc'>Průměrná doba od nahlášení do vyřešení závady</div>
+        <div class='metric-desc'>Od nahlášení do úplného vyřešení závady</div>
     </div>""", unsafe_allow_html=True)
 
     m6.markdown(f"""<div class='metric-box'>
         <div class='metric-num-purple'>{sla} %</div>
         <div class='metric-lbl'>📊 SLA &lt;30 min</div>
-        <div class='metric-desc'>Podíl závad vyřešených do 30 minut od nahlášení</div>
+        <div class='metric-desc'>Závady vyřešené do 30 minut od nahlášení</div>
     </div>""", unsafe_allow_html=True)
 
     trend_txt = f"+{trend}" if trend and trend > 0 else str(trend) if trend is not None else "—"
@@ -289,37 +305,53 @@ elif st.session_state.page == "dashboard":
     m7.markdown(f"""<div class='metric-box'>
         <div class='{trend_color}'>{trend_txt}</div>
         <div class='metric-lbl'>📈 vs předchozí</div>
-        <div class='metric-desc'>Rozdíl počtu závad oproti předchozímu stejnému období</div>
+        <div class='metric-desc'>Rozdíl závad oproti předchozímu stejnému období</div>
     </div>""", unsafe_allow_html=True)
 
     st.markdown("---")
 
-    # GRAFY — řada 1
+    # GRAFY řada 1
     col_g1, col_g2, col_g3 = st.columns([2, 1, 1])
     with col_g1:
         st.markdown("**📈 Závady za den**")
         daily = dff.groupby("datum").size().reset_index(name="Závady")
         daily["datum"] = pd.to_datetime(daily["datum"])
         st.line_chart(daily.sort_values("datum").set_index("datum"), use_container_width=True, height=200)
+
     with col_g2:
         st.markdown("**⚙️ Top technologie**")
         st.bar_chart(dff["Technologie"].value_counts().head(6), use_container_width=True, height=200)
+
     with col_g3:
         st.markdown("**⏰ Závady dle hodiny**")
         hourly = dff.groupby("hodina").size().reset_index(name="Počet")
         st.bar_chart(hourly.set_index("hodina"), use_container_width=True, height=200)
 
-    # GRAFY — řada 2
+    # GRAFY řada 2
     col_g4, col_g5, col_g6 = st.columns(3)
+
     with col_g4:
         st.markdown("**⚡ Podle priority**")
-        st.bar_chart(dff["Priorita"].value_counts(), use_container_width=True, height=180)
+        pri_counts = dff["Priorita"].value_counts().reset_index()
+        pri_counts.columns = ["Priorita", "Počet"]
+        color_map = {"High": "#dc2626", "Medium": "#f59e0b", "Low": "#22c55e"}
+        fig_pri = px.bar(pri_counts, x="Priorita", y="Počet",
+                        color="Priorita",
+                        color_discrete_map=color_map,
+                        height=200)
+        fig_pri.update_layout(showlegend=False, margin=dict(l=0, r=0, t=10, b=0),
+                             plot_bgcolor="white", paper_bgcolor="white")
+        fig_pri.update_xaxes(showgrid=False)
+        fig_pri.update_yaxes(showgrid=True, gridcolor="#f1f5f9")
+        st.plotly_chart(fig_pri, use_container_width=True)
+
     with col_g5:
         st.markdown("**📍 Podle oddělení**")
-        st.bar_chart(dff["Oddělení"].value_counts().head(6), use_container_width=True, height=180)
+        st.bar_chart(dff["Oddělení"].value_counts().head(6), use_container_width=True, height=200)
+
     with col_g6:
         st.markdown("**📍 Nejproblematičtější místa**")
-        st.bar_chart(dff["Místo"].value_counts().head(6), use_container_width=True, height=180)
+        st.bar_chart(dff["Místo"].value_counts().head(6), use_container_width=True, height=200)
 
     st.markdown("---")
     st.markdown("**⚠️ Nevyřešené závady**")
