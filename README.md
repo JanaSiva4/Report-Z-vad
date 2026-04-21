@@ -2,7 +2,7 @@
 
 Systém pro digitální hlášení, sledování a reportování technických závad ve skladu CZLC4.
 
-**Aplikace:** [reportzavad.streamlit.app](https://reportzavad.streamlit.app)
+**Aplikace:** [reportzavad.streamlit.app](https://maintenancedesk.streamlit.app/)
 
 ---
 
