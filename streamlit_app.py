@@ -164,7 +164,7 @@ if st.session_state.page == "form":
                     if attachments:
                         payload["attachments"] = []
                         for att in attachments:
-                        file_bytes = att.read()
+                            file_bytes = att.read()
                         payload["attachments"].append({
                             "data": base64.b64encode(file_bytes).decode("utf-8"),
                             "name": att.name
