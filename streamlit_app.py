@@ -137,7 +137,7 @@ if st.session_state.page == "form":
                 priority = st.selectbox("⚡ 4. Priority", ["Low", "Medium", "High"], index=1)
             description = st.text_area("📝 Detailed fault description *", height=220, placeholder="Describe the technical issue...")
             note = st.text_area("💡 Additional note (optional)", height=80)
-            attachment = st.file_uploader("📎 Attachment (optional)", type=["jpg", "jpeg", "png", "pdf"])
+            attachments = st.file_uploader("📎 Attachments (optional)", type=["jpg", "jpeg", "png", "pdf"], accept_multiple_files=True)
             st.markdown("<br>", unsafe_allow_html=True)
             submit = st.form_submit_button("SUBMIT REPORT", use_container_width=True)
 
