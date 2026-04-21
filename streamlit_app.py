@@ -33,73 +33,71 @@ if "page" not in st.session_state:
 
 st.markdown("""
 <style>
+    /* Skryj Streamlit header, footer a menu */
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    [data-testid="stToolbar"] {display: none;}
+    [data-testid="stDecoration"] {display: none;}
+    [data-testid="stStatusWidget"] {display: none;}
+
     .stApp { background-color: #f8fafc !important; }
+    .block-container { padding-top: 1.5rem !important; padding-bottom: 2rem !important; }
+
     [data-testid="stForm"] {
         background-color: #ffffff !important;
-        border-radius: 8px !important;
-        padding: 3rem !important;
+        border-radius: 10px !important;
+        padding: 2.5rem !important;
         border: 1px solid #e2e8f0 !important;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1) !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07) !important;
     }
-    h1 { color: #1e293b !important; font-weight: 700 !important; }
+
     .stButton>button {
-        border-radius: 6px !important;
+        border-radius: 8px !important;
         font-weight: 600 !important;
         height: 3em !important;
         width: 100% !important;
-        border: none !important;
+        transition: all 0.15s !important;
     }
-    .nav-container {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 24px;
-        background: white;
-        padding: 12px 16px;
-        border-radius: 10px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    }
-    .nav-active {
-        background: #2563eb !important;
-        color: white !important;
-    }
-    .nav-inactive {
-        background: #f1f5f9 !important;
-        color: #475569 !important;
-    }
+
     .metric-box {
         background: white;
         border-radius: 10px;
-        padding: 18px 16px;
+        padding: 16px;
         border: 1px solid #e2e8f0;
         text-align: center;
-        margin-bottom: 8px;
     }
-    .metric-num { font-size: 2rem; font-weight: 700; color: #1e293b; }
-    .metric-num-green { font-size: 2rem; font-weight: 700; color: #16a34a; }
-    .metric-num-red { font-size: 2rem; font-weight: 700; color: #dc2626; }
-    .metric-num-blue { font-size: 2rem; font-weight: 700; color: #2563eb; }
-    .metric-lbl { font-size: 0.82rem; color: #64748b; margin-top: 2px; }
-    .block-container { padding-top: 1.5rem !important; }
+    .metric-num { font-size: 1.8rem; font-weight: 700; color: #1e293b; }
+    .metric-num-green { font-size: 1.8rem; font-weight: 700; color: #16a34a; }
+    .metric-num-red { font-size: 1.8rem; font-weight: 700; color: #dc2626; }
+    .metric-num-blue { font-size: 1.8rem; font-weight: 700; color: #2563eb; }
+    .metric-lbl { font-size: 0.78rem; color: #64748b; margin-top: 2px; }
 </style>
 """, unsafe_allow_html=True)
 
 # NAVIGACE
 col1, col2 = st.columns(2)
 with col1:
-    if st.button("🛠️  Formulář hlášení závad",
-                 use_container_width=True,
-                 type="primary" if st.session_state.page == "form" else "secondary"):
-        st.session_state.page = "form"
-        st.rerun()
+    btn_form = st.button(
+        "🛠️  Formulář hlášení závad",
+        use_container_width=True,
+        type="primary" if st.session_state.page == "form" else "secondary"
+    )
 with col2:
-    if st.button("📊  Power BI Dashboard",
-                 use_container_width=True,
-                 type="primary" if st.session_state.page == "dashboard" else "secondary"):
-        st.session_state.page = "dashboard"
-        st.rerun()
+    btn_dash = st.button(
+        "📊  Power BI Dashboard",
+        use_container_width=True,
+        type="primary" if st.session_state.page == "dashboard" else "secondary"
+    )
 
-st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+if btn_form:
+    st.session_state.page = "form"
+    st.rerun()
+if btn_dash:
+    st.session_state.page = "dashboard"
+    st.rerun()
+
+st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
 
 # ==================== FORMULÁŘ ====================
 if st.session_state.page == "form":
@@ -172,13 +170,13 @@ if st.session_state.page == "form":
 
 # ==================== DASHBOARD ====================
 elif st.session_state.page == "dashboard":
-    st.set_page_config = None
-    st.markdown("<h1 style='color:#1e293b;font-weight:700'>📊 Power BI Dashboard — CZLC4</h1>", unsafe_allow_html=True)
+    st.title("📊 Power BI Dashboard — CZLC4")
 
     @st.cache_data(ttl=300)
     def load_data():
         try:
             r = requests.get(APPS_SCRIPT_URL, timeout=30)
+            r.raise_for_status()
             raw = r.json().get("data", [])
             df = pd.DataFrame(raw)
             if df.empty:
@@ -198,7 +196,7 @@ elif st.session_state.page == "dashboard":
             st.error(f"Chyba při načítání dat: {e}")
             return pd.DataFrame()
 
-    with st.spinner("Načítám data ze Sheets..."):
+    with st.spinner("Načítám data..."):
         df = load_data()
 
     if df.empty:
@@ -236,7 +234,6 @@ elif st.session_state.page == "dashboard":
 
     st.markdown("---")
 
-    # METRIKY
     m1, m2, m3, m4, m5 = st.columns(5)
     m1.markdown(f"<div class='metric-box'><div class='metric-num'>{total}</div><div class='metric-lbl'>📋 Celkem závad</div></div>", unsafe_allow_html=True)
     m2.markdown(f"<div class='metric-box'><div class='metric-num-green'>{vyreseno}</div><div class='metric-lbl'>✅ Vyřešeno ({pct} %)</div></div>", unsafe_allow_html=True)
@@ -246,39 +243,30 @@ elif st.session_state.page == "dashboard":
 
     st.markdown("---")
 
-    # GRAFY
     col_g1, col_g2 = st.columns(2)
     with col_g1:
         st.markdown("**📈 Závady za den**")
         daily = dff.groupby("datum").size().reset_index(name="Závady")
         daily["datum"] = pd.to_datetime(daily["datum"])
-        daily = daily.sort_values("datum")
-        st.line_chart(daily.set_index("datum"), use_container_width=True, height=220)
-
+        st.line_chart(daily.sort_values("datum").set_index("datum"), use_container_width=True, height=220)
     with col_g2:
         st.markdown("**⚙️ Top technologie**")
-        tech_counts = dff["Technologie"].value_counts().head(8)
-        st.bar_chart(tech_counts, use_container_width=True, height=220)
+        st.bar_chart(dff["Technologie"].value_counts().head(8), use_container_width=True, height=220)
 
     col_g3, col_g4 = st.columns(2)
     with col_g3:
         st.markdown("**⚡ Podle priority**")
-        pri_counts = dff["Priorita"].value_counts()
-        st.bar_chart(pri_counts, use_container_width=True, height=200)
-
+        st.bar_chart(dff["Priorita"].value_counts(), use_container_width=True, height=200)
     with col_g4:
         st.markdown("**📍 Podle oddělení**")
-        dept_counts = dff["Oddělení"].value_counts().head(6)
-        st.bar_chart(dept_counts, use_container_width=True, height=200)
+        st.bar_chart(dff["Oddělení"].value_counts().head(6), use_container_width=True, height=200)
 
     st.markdown("---")
     st.markdown("**⚠️ Nevyřešené závady**")
     nevyr = dff[~dff["vyreseno"]][["Čas nahlášení", "Technologie", "Místo", "Priorita", "Popis", "Nahlásil"]].copy()
     nevyr["Čas nahlášení"] = nevyr["Čas nahlášení"].dt.strftime("%d.%m. %H:%M")
-    nevyr = nevyr.sort_values("Čas nahlášení", ascending=False)
-    st.dataframe(nevyr, use_container_width=True, hide_index=True)
+    st.dataframe(nevyr.sort_values("Čas nahlášení", ascending=False), use_container_width=True, hide_index=True)
 
-    st.markdown("---")
     with st.expander("📋 Všechna data"):
         all_data = dff[["Čas nahlášení", "Technologie", "Místo", "Priorita", "Popis", "Nahlásil", "Čas reakce", "Čas vyřešení", "Popis řešení"]].copy()
         for col in ["Čas nahlášení", "Čas reakce", "Čas vyřešení"]:
