@@ -161,10 +161,14 @@ if st.session_state.page == "form":
                         "priority": priority, "description": description,
                         "note": note, "attachment": None, "attachment_name": None
                     }
-                    if attachment is not None:
-                        file_bytes = attachment.read()
-                        payload["attachment"] = base64.b64encode(file_bytes).decode("utf-8")
-                        payload["attachment_name"] = attachment.name
+                    if attachments:
+                        payload["attachments"] = []
+                        for att in attachments:
+                        file_bytes = att.read()
+                        payload["attachments"].append({
+                            "data": base64.b64encode(file_bytes).decode("utf-8"),
+                            "name": att.name
+                        })
                     try:
                         r = requests.post(WEBHOOK_URL, json=payload, timeout=30)
                         if r.status_code == 200:
