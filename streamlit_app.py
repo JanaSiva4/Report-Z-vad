@@ -91,7 +91,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # NAVIGACE
-nav_col1, nav_col2, nav_col3 = st.columns([1, 1, 6])
+nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
 with nav_col1:
     btn_form = st.button("🛠️ Formulář", use_container_width=True)
 with nav_col2:
