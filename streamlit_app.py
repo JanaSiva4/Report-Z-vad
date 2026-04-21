@@ -36,13 +36,9 @@ if "dashboard_auth" not in st.session_state:
 
 st.markdown("""
 <style>
-    #MainMenu {visibility: hidden;}
-    header {visibility: hidden;}
     footer {visibility: hidden;}
-    [data-testid="stToolbar"] {display: none;}
     [data-testid="stDecoration"] {display: none;}
     [data-testid="stStatusWidget"] {display: none;}
-    .stApp { background-color: #f1f5f9 !important; }
     .block-container { padding-top: 1.2rem !important; padding-bottom: 2rem !important; }
     [data-testid="stForm"] {
         background-color: #ffffff !important;
