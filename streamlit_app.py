@@ -33,17 +33,14 @@ if "page" not in st.session_state:
 
 st.markdown("""
 <style>
-    /* Skryj Streamlit header, footer a menu */
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
     footer {visibility: hidden;}
     [data-testid="stToolbar"] {display: none;}
     [data-testid="stDecoration"] {display: none;}
     [data-testid="stStatusWidget"] {display: none;}
-
     .stApp { background-color: #f8fafc !important; }
     .block-container { padding-top: 1.5rem !important; padding-bottom: 2rem !important; }
-
     [data-testid="stForm"] {
         background-color: #ffffff !important;
         border-radius: 10px !important;
@@ -51,7 +48,6 @@ st.markdown("""
         border: 1px solid #e2e8f0 !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.07) !important;
     }
-
     .stButton>button {
         border-radius: 8px !important;
         font-weight: 600 !important;
@@ -59,7 +55,6 @@ st.markdown("""
         width: 100% !important;
         transition: all 0.15s !important;
     }
-
     .metric-box {
         background: white;
         border-radius: 10px;
@@ -173,33 +168,33 @@ elif st.session_state.page == "dashboard":
     st.title("📊 Power BI Dashboard — CZLC4")
 
     @st.cache_data(ttl=300)
-def load_data():
-    try:
-        r = requests.get(
-            APPS_SCRIPT_URL, 
-            timeout=30,
-            allow_redirects=True,
-            headers={"User-Agent": "Mozilla/5.0"}
-        )
-        r.raise_for_status()
-        raw = r.json().get("data", [])
-        df = pd.DataFrame(raw)
-        if df.empty:
+    def load_data():
+        try:
+            session = requests.Session()
+            r = session.get(
+                APPS_SCRIPT_URL,
+                timeout=30,
+                allow_redirects=True,
+                headers={"User-Agent": "Mozilla/5.0"}
+            )
+            raw = r.json().get("data", [])
+            df = pd.DataFrame(raw)
+            if df.empty:
+                return df
+            for col in ["Čas nahlášení", "Čas reakce", "Čas vyřešení"]:
+                if col in df.columns:
+                    df[col] = pd.to_datetime(df[col], errors="coerce", utc=True)
+                    df[col] = df[col].dt.tz_convert("Europe/Prague")
+            df["datum"] = df["Čas nahlášení"].dt.date
+            df["vyreseno"] = df["Čas vyřešení"].notna()
+            df["doba_reakce_min"] = (df["Čas reakce"] - df["Čas nahlášení"]).dt.total_seconds() / 60
+            df["doba_opravy_min"] = (df["Čas vyřešení"] - df["Čas nahlášení"]).dt.total_seconds() / 60
+            df["doba_reakce_min"] = df["doba_reakce_min"].clip(lower=0)
+            df["doba_opravy_min"] = df["doba_opravy_min"].clip(lower=0)
             return df
-        for col in ["Čas nahlášení", "Čas reakce", "Čas vyřešení"]:
-            if col in df.columns:
-                df[col] = pd.to_datetime(df[col], errors="coerce", utc=True)
-                df[col] = df[col].dt.tz_convert("Europe/Prague")
-        df["datum"] = df["Čas nahlášení"].dt.date
-        df["vyreseno"] = df["Čas vyřešení"].notna()
-        df["doba_reakce_min"] = (df["Čas reakce"] - df["Čas nahlášení"]).dt.total_seconds() / 60
-        df["doba_opravy_min"] = (df["Čas vyřešení"] - df["Čas nahlášení"]).dt.total_seconds() / 60
-        df["doba_reakce_min"] = df["doba_reakce_min"].clip(lower=0)
-        df["doba_opravy_min"] = df["doba_opravy_min"].clip(lower=0)
-        return df
-    except Exception as e:
-        st.error(f"Chyba při načítání dat: {e}")
-        return pd.DataFrame()
+        except Exception as e:
+            st.error(f"Chyba při načítání dat: {e}")
+            return pd.DataFrame()
 
     with st.spinner("Načítám data..."):
         df = load_data()
@@ -208,7 +203,6 @@ def load_data():
         st.warning("Žádná data k zobrazení.")
         st.stop()
 
-    # FILTRY
     col_f1, col_f2, col_f3 = st.columns(3)
     with col_f1:
         tech_options = ["Vše"] + sorted(df["Technologie"].dropna().unique().tolist())
