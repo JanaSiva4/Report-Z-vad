@@ -77,16 +77,6 @@ st.markdown("""
     .metric-num-purple { font-size: 1.6rem; font-weight: 700; color: #7c3aed; }
     .metric-lbl { font-size: 0.72rem; color: #64748b; margin-top: 2px; }
     .metric-desc { font-size: 0.65rem; color: #94a3b8; margin-top: 3px; font-style: italic; }
-    .login-box {
-        background: white;
-        border-radius: 12px;
-        padding: 2.5rem;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-        max-width: 400px;
-        margin: 4rem auto;
-        text-align: center;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -137,7 +127,11 @@ if st.session_state.page == "form":
                 priority = st.selectbox("⚡ 4. Priority", ["Low", "Medium", "High"], index=1)
             description = st.text_area("📝 Detailed fault description *", height=220, placeholder="Describe the technical issue...")
             note = st.text_area("💡 Additional note (optional)", height=80)
-            attachments = st.file_uploader("📎 Attachments (optional)", type=["jpg", "jpeg", "png", "pdf"], accept_multiple_files=True)
+            attachments = st.file_uploader(
+                "📎 Attachments (optional)",
+                type=["jpg", "jpeg", "png", "pdf"],
+                accept_multiple_files=True
+            )
             st.markdown("<br>", unsafe_allow_html=True)
             submit = st.form_submit_button("SUBMIT REPORT", use_container_width=True)
 
@@ -156,19 +150,22 @@ if st.session_state.page == "form":
                     st.warning("⚠️ The 'Detailed fault description' field is required.")
                 else:
                     payload = {
-                        "reported_by": reported_by, "department": department,
-                        "technology": technology, "location": location,
-                        "priority": priority, "description": description,
-                        "note": note, "attachment": None, "attachment_name": None
+                        "reported_by": reported_by,
+                        "department": department,
+                        "technology": technology,
+                        "location": location,
+                        "priority": priority,
+                        "description": description,
+                        "note": note,
+                        "attachments": []
                     }
                     if attachments:
-                        payload["attachments"] = []
                         for att in attachments:
                             file_bytes = att.read()
-                        payload["attachments"].append({
-                            "data": base64.b64encode(file_bytes).decode("utf-8"),
-                            "name": att.name
-                        })
+                            payload["attachments"].append({
+                                "data": base64.b64encode(file_bytes).decode("utf-8"),
+                                "name": att.name
+                            })
                     try:
                         r = requests.post(WEBHOOK_URL, json=payload, timeout=30)
                         if r.status_code == 200:
