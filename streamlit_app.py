@@ -5,7 +5,6 @@ import base64
 import pandas as pd
 from datetime import datetime, timedelta
 import plotly.express as px
-import plotly.graph_objects as go
 
 st.set_page_config(
     page_title="Maintenance Helpdesk CZLC4",
@@ -32,6 +31,8 @@ TECHNOLOGIES = [
 
 if "page" not in st.session_state:
     st.session_state.page = "form"
+if "dashboard_auth" not in st.session_state:
+    st.session_state.dashboard_auth = False
 
 st.markdown("""
 <style>
@@ -66,11 +67,6 @@ st.markdown("""
         background: #f1f5f9 !important;
         color: #1e293b !important;
     }
-    .btn-active>div>button {
-        background: #2563eb !important;
-        color: white !important;
-        border-color: #2563eb !important;
-    }
     .metric-box {
         background: white;
         border-radius: 10px;
@@ -85,25 +81,25 @@ st.markdown("""
     .metric-num-purple { font-size: 1.6rem; font-weight: 700; color: #7c3aed; }
     .metric-lbl { font-size: 0.72rem; color: #64748b; margin-top: 2px; }
     .metric-desc { font-size: 0.65rem; color: #94a3b8; margin-top: 3px; font-style: italic; }
+    .login-box {
+        background: white;
+        border-radius: 12px;
+        padding: 2.5rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        max-width: 400px;
+        margin: 4rem auto;
+        text-align: center;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# NAVIGACE — bez červené
+# NAVIGACE
 nav_col1, nav_col2, nav_col3 = st.columns([1, 1, 6])
-
 with nav_col1:
-    if st.session_state.page == "form":
-        st.markdown('<div class="btn-active">', unsafe_allow_html=True)
-    btn_form = st.button("🛠️ Formulář", use_container_width=True, key="nav_form")
-    if st.session_state.page == "form":
-        st.markdown('</div>', unsafe_allow_html=True)
-
+    btn_form = st.button("🛠️ Formulář", use_container_width=True)
 with nav_col2:
-    if st.session_state.page == "dashboard":
-        st.markdown('<div class="btn-active">', unsafe_allow_html=True)
-    btn_dash = st.button("📊 Power BI Dashboard", use_container_width=True, key="nav_dash")
-    if st.session_state.page == "dashboard":
-        st.markdown('</div>', unsafe_allow_html=True)
+    btn_dash = st.button("📊 Power BI Dashboard", use_container_width=True)
 
 if btn_form:
     st.session_state.page = "form"
@@ -188,6 +184,23 @@ if st.session_state.page == "form":
 # ==================== DASHBOARD ====================
 elif st.session_state.page == "dashboard":
 
+    # PŘIHLÁŠENÍ
+    if not st.session_state.dashboard_auth:
+        _, center, _ = st.columns([1, 1, 1])
+        with center:
+            st.markdown("<div style='height:2rem'></div>", unsafe_allow_html=True)
+            st.markdown("### 🔒 Přístup do dashboardu")
+            st.markdown("Dashboard je dostupný pouze oprávněným uživatelům.")
+            password = st.text_input("Zadejte heslo", type="password")
+            if st.button("Přihlásit se", use_container_width=True):
+                correct = st.secrets.get("DASHBOARD_PASSWORD", "czlc4admin")
+                if password == correct:
+                    st.session_state.dashboard_auth = True
+                    st.rerun()
+                else:
+                    st.error("❌ Nesprávné heslo.")
+        st.stop()
+
     @st.cache_data(ttl=300)
     def load_data():
         try:
@@ -222,7 +235,15 @@ elif st.session_state.page == "dashboard":
         st.warning("Žádná data k zobrazení.")
         st.stop()
 
-    st.markdown("### 📊 Power BI Dashboard — CZLC4")
+    col_header, col_logout = st.columns([8, 1])
+    with col_header:
+        st.markdown("### 📊 Power BI Dashboard — CZLC4")
+    with col_logout:
+        if st.button("🔓 Odhlásit", use_container_width=True):
+            st.session_state.dashboard_auth = False
+            st.session_state.page = "form"
+            st.rerun()
+
     col_f1, col_f2, col_f3, col_f4 = st.columns(4)
     with col_f1:
         tech_options = ["Vše"] + sorted(df["Technologie"].dropna().unique().tolist())
@@ -310,45 +331,36 @@ elif st.session_state.page == "dashboard":
 
     st.markdown("---")
 
-    # GRAFY řada 1
     col_g1, col_g2, col_g3 = st.columns([2, 1, 1])
     with col_g1:
         st.markdown("**📈 Závady za den**")
         daily = dff.groupby("datum").size().reset_index(name="Závady")
         daily["datum"] = pd.to_datetime(daily["datum"])
         st.line_chart(daily.sort_values("datum").set_index("datum"), use_container_width=True, height=200)
-
     with col_g2:
         st.markdown("**⚙️ Top technologie**")
         st.bar_chart(dff["Technologie"].value_counts().head(6), use_container_width=True, height=200)
-
     with col_g3:
         st.markdown("**⏰ Závady dle hodiny**")
         hourly = dff.groupby("hodina").size().reset_index(name="Počet")
         st.bar_chart(hourly.set_index("hodina"), use_container_width=True, height=200)
 
-    # GRAFY řada 2
     col_g4, col_g5, col_g6 = st.columns(3)
-
     with col_g4:
         st.markdown("**⚡ Podle priority**")
         pri_counts = dff["Priorita"].value_counts().reset_index()
         pri_counts.columns = ["Priorita", "Počet"]
         color_map = {"High": "#dc2626", "Medium": "#f59e0b", "Low": "#22c55e"}
         fig_pri = px.bar(pri_counts, x="Priorita", y="Počet",
-                        color="Priorita",
-                        color_discrete_map=color_map,
-                        height=200)
+                        color="Priorita", color_discrete_map=color_map, height=200)
         fig_pri.update_layout(showlegend=False, margin=dict(l=0, r=0, t=10, b=0),
                              plot_bgcolor="white", paper_bgcolor="white")
         fig_pri.update_xaxes(showgrid=False)
         fig_pri.update_yaxes(showgrid=True, gridcolor="#f1f5f9")
         st.plotly_chart(fig_pri, use_container_width=True)
-
     with col_g5:
         st.markdown("**📍 Podle oddělení**")
         st.bar_chart(dff["Oddělení"].value_counts().head(6), use_container_width=True, height=200)
-
     with col_g6:
         st.markdown("**📍 Nejproblematičtější místa**")
         st.bar_chart(dff["Místo"].value_counts().head(6), use_container_width=True, height=200)
