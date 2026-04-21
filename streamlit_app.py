@@ -112,8 +112,8 @@ st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 if st.session_state.page == "form":
     _, center, _ = st.columns([1, 2, 1])
     with center:
-        st.title("🛠️ Technical Fault Report")
-        st.markdown("Please fill in the technical details of the issue. The information will be immediately sent for resolution.")
+         st.markdown("<h1 style='text-align:center'>🛠️ Technical Fault Report</h1>", unsafe_allow_html=True)
+         st.markdown("<p style='text-align:center;color:#64748b'>Please fill in the technical details of the issue. The information will be immediately sent for resolution.</p>", unsafe_allow_html=True)
 
         with st.form("service_desk", clear_on_submit=True):
             reported_by = st.text_input("👤 Reported by *")
