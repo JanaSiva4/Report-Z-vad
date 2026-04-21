@@ -43,7 +43,7 @@ st.markdown("""
     [data-testid="stForm"] {
         background-color: #ffffff !important;
         border-radius: 10px !important;
-        padding: 5rem !important;
+        padding: 2.5rem !important;
         border: 1px solid #e2e8f0 !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.07) !important;
         max-width: 720px !important;
