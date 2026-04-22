@@ -127,7 +127,7 @@ if st.session_state.page == "form":
                 priority = st.selectbox("⚡ 4. Priority", ["Low", "Medium", "High"], index=1)
             description = st.text_area("📝 Detailed fault description *", height=220, placeholder="Describe the technical issue...")
             note = st.text_area("💡 Additional note (optional)", height=80)
-            attachment = st.file_uploader("📎 Attachment (optional)", type=["jpg", "jpeg", "png", "pdf"])
+            attachments = st.file_uploader("📎 Attachments (optional)", type=["jpg", "jpeg", "png", "pdf"], accept_multiple_files=True)
             st.markdown("<br>", unsafe_allow_html=True)
             submit = st.form_submit_button("SUBMIT REPORT", use_container_width=True)
 
@@ -153,13 +153,15 @@ if st.session_state.page == "form":
                         "priority": priority,
                         "description": description,
                         "note": note,
-                        "attachment": None,
-                        "attachment_name": None
+                        "attachments": []
                     }
-                    if attachment is not None:
-                        file_bytes = attachment.read()
-                        payload["attachment"] = base64.b64encode(file_bytes).decode("utf-8")
-                        payload["attachment_name"] = attachment.name
+                    if attachments:
+                        for att in attachments:
+                            file_bytes = att.read()
+                            payload["attachments"].append({
+                                "data": base64.b64encode(file_bytes).decode("utf-8"),
+                                "name": att.name
+                            })
                     try:
                         r = requests.post(WEBHOOK_URL, json=payload, timeout=30)
                         if r.status_code == 200:
