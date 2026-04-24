@@ -16,9 +16,9 @@ APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwY2WxHmmw27DwsB3L24E
 WEBHOOK_URL = "https://n8n.dev.gcp.alza.cz/webhook/54ef8aa9-e750-4e22-9dad-3b4969e05053"
 
 DEPARTMENTS = [
-    "balení F1", "balení F2", "AS",
-    "nakládka F1", "nakládka F2", "doplňování F2",
-    "SPO", "BPO", "VS příjem", "VS potvrzování",
+    "předák balení F1", "předák balení F2", "předák AS",
+    "předák nakládka F1", "předák nakládka F2", "předák doplňování F2",
+    "předák SPO", "předák BPO", "VS příjem", "VS potvrzování",
     "VS balení", "VS pick AS", "VS nakládka", "Specialista AS",
     "Specialista IT", "Vedení LC", "➕ Jiné / Other"
 ]
@@ -33,6 +33,8 @@ if "page" not in st.session_state:
     st.session_state.page = "form"
 if "dashboard_auth" not in st.session_state:
     st.session_state.dashboard_auth = False
+if "days_filter" not in st.session_state:
+    st.session_state.days_filter = "30"
 
 st.markdown("""
 <style>
@@ -70,6 +72,13 @@ st.markdown("""
         border: 1px solid #e2e8f0;
         text-align: center;
     }
+    .metric-box-alert {
+        background: white;
+        border-radius: 10px;
+        padding: 14px 10px;
+        border: 1.5px solid #dc2626;
+        text-align: center;
+    }
     .metric-num { font-size: 1.6rem; font-weight: 700; color: #1e293b; }
     .metric-num-green { font-size: 1.6rem; font-weight: 700; color: #16a34a; }
     .metric-num-red { font-size: 1.6rem; font-weight: 700; color: #dc2626; }
@@ -77,6 +86,17 @@ st.markdown("""
     .metric-num-purple { font-size: 1.6rem; font-weight: 700; color: #7c3aed; }
     .metric-lbl { font-size: 0.72rem; color: #64748b; margin-top: 2px; }
     .metric-desc { font-size: 0.65rem; color: #94a3b8; margin-top: 3px; font-style: italic; }
+    .chart-desc { font-size: 0.7rem; color: #94a3b8; margin-top: 4px; font-style: italic; }
+    .pill-active {
+        display: inline-block; padding: 4px 14px; border-radius: 20px;
+        background: #2563eb; color: white; font-size: 12px; font-weight: 600;
+        border: none; cursor: pointer; margin-right: 4px;
+    }
+    .pill-inactive {
+        display: inline-block; padding: 4px 14px; border-radius: 20px;
+        background: #f1f5f9; color: #475569; font-size: 12px; font-weight: 500;
+        border: 1px solid #e2e8f0; cursor: pointer; margin-right: 4px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -127,7 +147,7 @@ if st.session_state.page == "form":
                 priority = st.selectbox("⚡ 4. Priority", ["Low", "Medium", "High"], index=1)
             description = st.text_area("📝 Detailed fault description *", height=220, placeholder="Describe the technical issue...")
             note = st.text_area("💡 Additional note (optional)", height=80)
-            attachments = st.file_uploader("📎 Attachments (optional)", type=["jpg", "jpeg", "png", "pdf"], accept_multiple_files=True)
+            attachment = st.file_uploader("📎 Attachment (optional)", type=["jpg", "jpeg", "png", "pdf"])
             st.markdown("<br>", unsafe_allow_html=True)
             submit = st.form_submit_button("SUBMIT REPORT", use_container_width=True)
 
@@ -146,22 +166,15 @@ if st.session_state.page == "form":
                     st.warning("⚠️ The 'Detailed fault description' field is required.")
                 else:
                     payload = {
-                        "reported_by": reported_by,
-                        "department": department,
-                        "technology": technology,
-                        "location": location,
-                        "priority": priority,
-                        "description": description,
-                        "note": note,
-                        "attachments": []
+                        "reported_by": reported_by, "department": department,
+                        "technology": technology, "location": location,
+                        "priority": priority, "description": description,
+                        "note": note, "attachment": None, "attachment_name": None
                     }
-                    if attachments:
-                        for att in attachments:
-                            file_bytes = att.read()
-                            payload["attachments"].append({
-                                "data": base64.b64encode(file_bytes).decode("utf-8"),
-                                "name": att.name
-                            })
+                    if attachment is not None:
+                        file_bytes = attachment.read()
+                        payload["attachment"] = base64.b64encode(file_bytes).decode("utf-8")
+                        payload["attachment_name"] = attachment.name
                     try:
                         r = requests.post(WEBHOOK_URL, json=payload, timeout=30)
                         if r.status_code == 200:
@@ -229,38 +242,62 @@ elif st.session_state.page == "dashboard":
         st.warning("Žádná data k zobrazení.")
         st.stop()
 
+    # HEADER
+    now_str = datetime.now().strftime("%d.%m.%Y %H:%M")
     col_header, col_logout = st.columns([8, 1])
     with col_header:
-        st.markdown("### 📊 Power BI Dashboard — CZLC4")
+        st.markdown(f"### 📊 Power BI Dashboard — CZLC4")
+        st.markdown(f"<div style='font-size:12px;color:#94a3b8;margin-top:-12px'>Aktualizováno {now_str} · data z Google Sheets</div>", unsafe_allow_html=True)
     with col_logout:
         if st.button("🔓 Odhlásit", use_container_width=True):
             st.session_state.dashboard_auth = False
             st.session_state.page = "form"
             st.rerun()
 
-    col_f1, col_f2, col_f3, col_f4 = st.columns(4)
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+
+    # FILTRY — pill přepínače pro období + dropdowny pro technologii a prioritu
+    col_f1, col_f2, col_f3, col_f4 = st.columns([2, 1, 1, 1])
     with col_f1:
+        st.markdown("<div style='font-size:12px;color:#64748b;margin-bottom:4px'>📅 Období</div>", unsafe_allow_html=True)
+        p1, p2, p3, p4 = st.columns(4)
+        with p1:
+            if st.button("7 dní", use_container_width=True):
+                st.session_state.days_filter = "7"
+                st.rerun()
+        with p2:
+            if st.button("30 dní", use_container_width=True):
+                st.session_state.days_filter = "30"
+                st.rerun()
+        with p3:
+            if st.button("Vše", use_container_width=True):
+                st.session_state.days_filter = "all"
+                st.rerun()
+        with p4:
+            active_label = {"7": "7 dní", "30": "30 dní", "all": "Vše"}.get(st.session_state.days_filter, "30 dní")
+            st.markdown(f"<div style='padding:6px 0;font-size:12px;color:#2563eb;font-weight:600'>✓ {active_label}</div>", unsafe_allow_html=True)
+    with col_f2:
         tech_options = ["Vše"] + sorted(df["Technologie"].dropna().unique().tolist())
         tech_filter = st.selectbox("⚙️ Technologie", tech_options)
-    with col_f2:
-        priority_filter = st.selectbox("⚡ Priorita", ["Vše", "High", "Medium", "Low"])
     with col_f3:
-        days_filter = st.selectbox("📅 Období", ["Posledních 7 dní", "Posledních 30 dní", "Vše"], index=2)
+        priority_filter = st.selectbox("⚡ Priorita", ["Vše", "High", "Medium", "Low"])
     with col_f4:
-        if st.button("🔄 Obnovit data", use_container_width=True):
+        if st.button("🔄 Obnovit", use_container_width=True):
             st.cache_data.clear()
             st.rerun()
 
+    # FILTROVÁNÍ DAT
     dff = df.copy()
     if tech_filter != "Vše":
         dff = dff[dff["Technologie"] == tech_filter]
     if priority_filter != "Vše":
         dff = dff[dff["Priorita"] == priority_filter]
-    if days_filter == "Posledních 7 dní":
+
+    if st.session_state.days_filter == "7":
         cutoff = pd.Timestamp.now(tz="Europe/Prague") - timedelta(days=7)
         dff = dff[dff["Čas nahlášení"] >= cutoff]
         prev = df[(df["Čas nahlášení"] >= cutoff - timedelta(days=7)) & (df["Čas nahlášení"] < cutoff)]
-    elif days_filter == "Posledních 30 dní":
+    elif st.session_state.days_filter == "30":
         cutoff = pd.Timestamp.now(tz="Europe/Prague") - timedelta(days=30)
         dff = dff[dff["Čas nahlášení"] >= cutoff]
         prev = df[(df["Čas nahlášení"] >= cutoff - timedelta(days=30)) & (df["Čas nahlášení"] < cutoff)]
@@ -275,59 +312,65 @@ elif st.session_state.page == "dashboard":
     pct = round(vyreseno / total * 100, 1) if total > 0 else 0
     sla = round(dff["sla_splneno"].sum() / total * 100, 1) if total > 0 else 0
     trend = len(dff) - len(prev) if not prev.empty else None
+    trend_positive = trend and trend > 0
 
     st.markdown("---")
-    m1, m2, m3, m4, m5, m6, m7 = st.columns(7)
 
+    # METRIKY
+    m1, m2, m3, m4, m5, m6, m7 = st.columns(7)
     m1.markdown(f"""<div class='metric-box'>
         <div class='metric-num'>{total}</div>
         <div class='metric-lbl'>📋 Celkem závad</div>
-        <div class='metric-desc'>Počet všech hlášení za vybrané období</div>
+        <div class='metric-desc'>všechna hlášení</div>
     </div>""", unsafe_allow_html=True)
     m2.markdown(f"""<div class='metric-box'>
         <div class='metric-num-green'>{vyreseno}</div>
         <div class='metric-lbl'>✅ Vyřešeno ({pct} %)</div>
-        <div class='metric-desc'>Závady označené jako hotovo / vyřešeno</div>
+        <div class='metric-desc'>hotovo / vyřešeno</div>
     </div>""", unsafe_allow_html=True)
     m3.markdown(f"""<div class='metric-box'>
         <div class='metric-num-red'>{nevyreseno}</div>
         <div class='metric-lbl'>⚠️ Nevyřešeno</div>
-        <div class='metric-desc'>Otevřené závady čekající na opravu</div>
+        <div class='metric-desc'>čeká na opravu</div>
     </div>""", unsafe_allow_html=True)
     m4.markdown(f"""<div class='metric-box'>
         <div class='metric-num-blue'>{round(avg_reakce,1) if not pd.isna(avg_reakce) else '—'} min</div>
         <div class='metric-lbl'>⏱️ Prům. reakce</div>
-        <div class='metric-desc'>Od nahlášení do první odpovědi technika</div>
+        <div class='metric-desc'>do první odpovědi technika</div>
     </div>""", unsafe_allow_html=True)
     m5.markdown(f"""<div class='metric-box'>
         <div class='metric-num-blue'>{round(avg_oprava,1) if not pd.isna(avg_oprava) else '—'} min</div>
         <div class='metric-lbl'>🔧 Prům. oprava</div>
-        <div class='metric-desc'>Od nahlášení do úplného vyřešení závady</div>
+        <div class='metric-desc'>od nahlášení do vyřešení</div>
     </div>""", unsafe_allow_html=True)
     m6.markdown(f"""<div class='metric-box'>
         <div class='metric-num-purple'>{sla} %</div>
         <div class='metric-lbl'>📊 SLA &lt;30 min</div>
-        <div class='metric-desc'>Závady vyřešené do 30 minut od nahlášení</div>
+        <div class='metric-desc'>vyřešeno do 30 minut</div>
     </div>""", unsafe_allow_html=True)
     trend_txt = f"+{trend}" if trend and trend > 0 else str(trend) if trend is not None else "—"
-    trend_color = "metric-num-red" if trend and trend > 0 else "metric-num-green" if trend and trend < 0 else "metric-num"
-    m7.markdown(f"""<div class='metric-box'>
+    trend_color = "metric-num-red" if trend_positive else "metric-num-green" if trend is not None and trend < 0 else "metric-num"
+    box_class = "metric-box-alert" if trend_positive else "metric-box"
+    m7.markdown(f"""<div class='{box_class}'>
         <div class='{trend_color}'>{trend_txt}</div>
         <div class='metric-lbl'>📈 vs předchozí</div>
-        <div class='metric-desc'>Rozdíl závad oproti předchozímu stejnému období</div>
+        <div class='metric-desc'>oproti min. období</div>
     </div>""", unsafe_allow_html=True)
 
     st.markdown("---")
 
+    # GRAFY řada 1
     col_g1, col_g2, col_g3 = st.columns([2, 1, 1])
     with col_g1:
         st.markdown("**📈 Závady za den**")
         daily = dff.groupby("datum").size().reset_index(name="Závady")
         daily["datum"] = pd.to_datetime(daily["datum"])
-        st.line_chart(daily.sort_values("datum").set_index("datum"), use_container_width=True, height=200)
+        st.line_chart(daily.sort_values("datum").set_index("datum"), use_container_width=True, height=180)
+        st.markdown("<div class='chart-desc'>Denní počet nahlášených závad — odhaluje vytížené dny a trendy v čase</div>", unsafe_allow_html=True)
     with col_g2:
         st.markdown("**⚙️ Top technologie**")
-        st.bar_chart(dff["Technologie"].value_counts().head(6), use_container_width=True, height=200)
+        st.bar_chart(dff["Technologie"].value_counts().head(6), use_container_width=True, height=180)
+        st.markdown("<div class='chart-desc'>Které technologie selhávají nejčastěji — priorita pro preventivní údržbu</div>", unsafe_allow_html=True)
     with col_g3:
         st.markdown("**📅 Závady dle dne v týdnu**")
         day_order = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
@@ -339,15 +382,16 @@ elif st.session_state.page == "dashboard":
         weekly["den_cz"] = weekly["den_tydne"].map(day_names_cz)
         max_day = weekly.loc[weekly["Počet"].idxmax(), "den_cz"] if not weekly.empty else "—"
         weekly["barva"] = weekly["den_cz"].apply(lambda x: "#dc2626" if x == max_day else "#2563eb")
-        fig_week = px.bar(weekly, x="den_cz", y="Počet", height=200,
+        fig_week = px.bar(weekly, x="den_cz", y="Počet", height=180,
                          color="barva", color_discrete_map="identity")
         fig_week.update_layout(showlegend=False, margin=dict(l=0, r=0, t=10, b=0),
                               plot_bgcolor="white", paper_bgcolor="white")
         fig_week.update_xaxes(showgrid=False)
         fig_week.update_yaxes(showgrid=True, gridcolor="#f1f5f9")
         st.plotly_chart(fig_week, use_container_width=True)
-        st.caption(f"🔴 Nejvíce závad: **{max_day}**")
+        st.markdown(f"<div class='chart-desc'>Který den je nejvytíženější — červený sloupec = nejvíce závad ({max_day})</div>", unsafe_allow_html=True)
 
+    # GRAFY řada 2
     col_g4, col_g5, col_g6 = st.columns(3)
     with col_g4:
         st.markdown("**⚡ Podle priority**")
@@ -355,18 +399,21 @@ elif st.session_state.page == "dashboard":
         pri_counts.columns = ["Priorita", "Počet"]
         color_map = {"High": "#dc2626", "Medium": "#f59e0b", "Low": "#22c55e"}
         fig_pri = px.bar(pri_counts, x="Priorita", y="Počet",
-                        color="Priorita", color_discrete_map=color_map, height=200)
+                        color="Priorita", color_discrete_map=color_map, height=180)
         fig_pri.update_layout(showlegend=False, margin=dict(l=0, r=0, t=10, b=0),
                              plot_bgcolor="white", paper_bgcolor="white")
         fig_pri.update_xaxes(showgrid=False)
         fig_pri.update_yaxes(showgrid=True, gridcolor="#f1f5f9")
         st.plotly_chart(fig_pri, use_container_width=True)
+        st.markdown("<div class='chart-desc'>Rozložení závad dle naléhavosti — červená = okamžitý zásah, žlutá = brzy, zelená = plánovaně</div>", unsafe_allow_html=True)
     with col_g5:
         st.markdown("**📍 Podle oddělení**")
-        st.bar_chart(dff["Oddělení"].value_counts().head(6), use_container_width=True, height=200)
+        st.bar_chart(dff["Oddělení"].value_counts().head(6), use_container_width=True, height=180)
+        st.markdown("<div class='chart-desc'>Kde je největší technická zátěž — pomáhá přidělit techniky tam kde je to nejvíc potřeba</div>", unsafe_allow_html=True)
     with col_g6:
         st.markdown("**📍 Nejproblematičtější místa**")
-        st.bar_chart(dff["Místo"].value_counts().head(6), use_container_width=True, height=200)
+        st.bar_chart(dff["Místo"].value_counts().head(6), use_container_width=True, height=180)
+        st.markdown("<div class='chart-desc'>Lokace s opakujícími se poruchami — kandidáti na preventivní prohlídku</div>", unsafe_allow_html=True)
 
     st.markdown("---")
     st.markdown("**⚠️ Nevyřešené závady**")
