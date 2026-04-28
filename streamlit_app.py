@@ -16,9 +16,9 @@ APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwY2WxHmmw27DwsB3L24E
 WEBHOOK_URL = "https://n8n.dev.gcp.alza.cz/webhook/54ef8aa9-e750-4e22-9dad-3b4969e05053"
 
 DEPARTMENTS = [
-    "balení F1", "balení F2", "AS",
-    "nakládka F1", "nakládka F2", "doplňování F2",
-    "SPO", "BPO", "VS příjem", "VS potvrzování",
+    "předák balení F1", "předák balení F2", "předák AS",
+    "předák nakládka F1", "předák nakládka F2", "předák doplňování F2",
+    "předák SPO", "předák BPO", "VS příjem", "VS potvrzování",
     "VS balení", "VS pick AS", "VS nakládka", "Specialista AS",
     "Specialista IT", "Vedení LC", "➕ Jiné / Other"
 ]
@@ -264,7 +264,8 @@ elif st.session_state.page == "dashboard":
                     df[col] = df[col].dt.tz_convert("Europe/Prague")
             df["datum"] = df["Čas nahlášení"].dt.date
             df["den_tydne"] = df["Čas nahlášení"].dt.day_name()
-            df["vyreseno"] = df["Čas vyřešení"].notna()
+            df["vyreseno"] = df["Stav"].apply(lambda x: str(x).strip() == "Vyřešeno") if "Stav" in df.columns else df["Čas vyřešení"].notna()
+            df["v_reseni"] = df["Stav"].apply(lambda x: str(x).strip() == "V řešení") if "Stav" in df.columns else False
             df["doba_reakce_min"] = (df["Čas reakce"] - df["Čas nahlášení"]).dt.total_seconds() / 60
             df["doba_opravy_min"] = (df["Čas vyřešení"] - df["Čas nahlášení"]).dt.total_seconds() / 60
             df["doba_reakce_min"] = df["doba_reakce_min"].clip(lower=0)
@@ -346,9 +347,10 @@ elif st.session_state.page == "dashboard":
 
     total = len(dff)
     vyreseno = int(dff["vyreseno"].sum())
-    nevyreseno = total - vyreseno
+    v_reseni = int(dff["v_reseni"].sum()) if "v_reseni" in dff.columns else 0
+    nevyreseno = total - vyreseno - v_reseni
     avg_reakce = dff["doba_reakce_min"].dropna().mean()
-    avg_oprava = dff["doba_opravy_min"].dropna().mean()
+    avg_oprava = dff[dff["vyreseno"]]["doba_opravy_min"].dropna().mean()
     pct = round(vyreseno / total * 100, 1) if total > 0 else 0
     sla = round(dff["sla_splneno"].sum() / total * 100, 1) if total > 0 else 0
     trend = len(dff) - len(prev) if not prev.empty else None
@@ -357,7 +359,7 @@ elif st.session_state.page == "dashboard":
     st.markdown("---")
 
     # METRIKY
-    m1, m2, m3, m4, m5, m6, m7 = st.columns(7)
+    m1, m2, m3, m4, m5, m6, m7, m8 = st.columns(8)
     m1.markdown(f"""<div class='metric-box'>
         <div class='metric-num'>{total}</div>
         <div class='metric-lbl'>📋 Celkem závad</div>
@@ -374,16 +376,21 @@ elif st.session_state.page == "dashboard":
         <div class='metric-desc'>čeká na opravu</div>
     </div>""", unsafe_allow_html=True)
     m4.markdown(f"""<div class='metric-box'>
+        <div class='metric-num' style='color:#f59e0b'>{v_reseni}</div>
+        <div class='metric-lbl'>🔧 V řešení</div>
+        <div class='metric-desc'>čeká na servis / díl</div>
+    </div>""", unsafe_allow_html=True)
+    m5.markdown(f"""<div class='metric-box'>
         <div class='metric-num-blue'>{round(avg_reakce,1) if not pd.isna(avg_reakce) else '—'} min</div>
         <div class='metric-lbl'>⏱️ Prům. reakce</div>
         <div class='metric-desc'>do první odpovědi technika</div>
     </div>""", unsafe_allow_html=True)
-    m5.markdown(f"""<div class='metric-box'>
+    m6.markdown(f"""<div class='metric-box'>
         <div class='metric-num-blue'>{round(avg_oprava,1) if not pd.isna(avg_oprava) else '—'} min</div>
         <div class='metric-lbl'>🔧 Prům. oprava</div>
-        <div class='metric-desc'>od nahlášení do vyřešení</div>
+        <div class='metric-desc'>pouze vyřešené závady</div>
     </div>""", unsafe_allow_html=True)
-    m6.markdown(f"""<div class='metric-box'>
+    m7.markdown(f"""<div class='metric-box'>
         <div class='metric-num-purple'>{sla} %</div>
         <div class='metric-lbl'>📊 SLA &lt;30 min</div>
         <div class='metric-desc'>vyřešeno do 30 minut</div>
@@ -391,7 +398,7 @@ elif st.session_state.page == "dashboard":
     trend_txt = f"+{trend}" if trend and trend > 0 else str(trend) if trend is not None else "—"
     trend_color = "metric-num-red" if trend_positive else "metric-num-green" if trend is not None and trend < 0 else "metric-num"
     box_class = "metric-box-alert" if trend_positive else "metric-box"
-    m7.markdown(f"""<div class='{box_class}'>
+    m8.markdown(f"""<div class='{box_class}'>
         <div class='{trend_color}'>{trend_txt}</div>
         <div class='metric-lbl'>📈 vs předchozí</div>
         <div class='metric-desc'>oproti min. období</div>
@@ -456,8 +463,11 @@ elif st.session_state.page == "dashboard":
         st.markdown("<div class='chart-desc'>Lokace s opakujícími se poruchami — kandidáti na preventivní prohlídku</div>", unsafe_allow_html=True)
 
     st.markdown("---")
-    st.markdown("**⚠️ Nevyřešené závady**")
-    nevyr = dff[~dff["vyreseno"]][["Čas nahlášení", "Technologie", "Místo", "Priorita", "Popis", "Nahlásil"]].copy()
+    st.markdown("**⚠️ Nevyřešené závady a závady V řešení**")
+    cols_show = ["Čas nahlášení", "Technologie", "Místo", "Priorita", "Popis", "Nahlásil"]
+    if "Stav" in dff.columns:
+        cols_show.append("Stav")
+    nevyr = dff[~dff["vyreseno"]][cols_show].copy()
     nevyr["Čas nahlášení"] = nevyr["Čas nahlášení"].dt.strftime("%d.%m. %H:%M")
     st.dataframe(nevyr.sort_values("Čas nahlášení", ascending=False), use_container_width=True, hide_index=True)
 
