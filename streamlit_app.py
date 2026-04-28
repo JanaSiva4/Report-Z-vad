@@ -264,8 +264,13 @@ elif st.session_state.page == "dashboard":
                     df[col] = df[col].dt.tz_convert("Europe/Prague")
             df["datum"] = df["Čas nahlášení"].dt.date
             df["den_tydne"] = df["Čas nahlášení"].dt.day_name()
-            df["vyreseno"] = df["Stav"].apply(lambda x: str(x).strip() == "Vyřešeno") if "Stav" in df.columns else df["Čas vyřešení"].notna()
-            df["v_reseni"] = df["Stav"].apply(lambda x: str(x).strip() == "V řešení") if "Stav" in df.columns else False
+            # Vyřešeno = má Čas vyřešení NEBO Stav == Vyřešeno
+            if "Stav" in df.columns:
+                df["vyreseno"] = df["Čas vyřešení"].notna() | df["Stav"].apply(lambda x: str(x).strip() == "Vyřešeno")
+                df["v_reseni"] = (~df["Čas vyřešení"].notna()) & df["Stav"].apply(lambda x: str(x).strip() == "V řešení")
+            else:
+                df["vyreseno"] = df["Čas vyřešení"].notna()
+                df["v_reseni"] = False
             df["doba_reakce_min"] = (df["Čas reakce"] - df["Čas nahlášení"]).dt.total_seconds() / 60
             df["doba_opravy_min"] = (df["Čas vyřešení"] - df["Čas nahlášení"]).dt.total_seconds() / 60
             df["doba_reakce_min"] = df["doba_reakce_min"].clip(lower=0)
@@ -387,7 +392,7 @@ elif st.session_state.page == "dashboard":
     </div>""", unsafe_allow_html=True)
     m6.markdown(f"""<div class='metric-box'>
         <div class='metric-num-blue'>{round(avg_oprava,1) if not pd.isna(avg_oprava) else '—'} min</div>
-        <div class='metric-lbl'>🔧 Prům. oprava</div>
+        <div class='metric-lbl'>⏱️ Prům. oprava</div>
         <div class='metric-desc'>pouze vyřešené závady</div>
     </div>""", unsafe_allow_html=True)
     m7.markdown(f"""<div class='metric-box'>
