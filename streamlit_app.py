@@ -176,7 +176,7 @@ if st.session_state.page == "form":
                 description = st.text_area("📝 Detailed fault description *", height=220,
                     placeholder="Describe the technical issue...", value=st.session_state.f_description)
                 note = st.text_area("💡 Additional note (optional)", height=80, value=st.session_state.f_note)
-                attachment = st.file_uploader("📎 Attachment (optional)", type=["jpg", "jpeg", "png", "pdf"])
+                attachments = st.file_uploader("📎 Attachments (optional)", type=["jpg", "jpeg", "png", "pdf"], accept_multiple_files=True)
                 st.markdown("<br>", unsafe_allow_html=True)
                 submit = st.form_submit_button("SUBMIT REPORT", use_container_width=True)
 
@@ -209,12 +209,15 @@ if st.session_state.page == "form":
                             "reported_by": reported_by, "department": department,
                             "technology": technology, "location": location,
                             "priority": priority, "description": description,
-                            "note": note, "attachment": None, "attachment_name": None
+                            "note": note, "attachments": []
                         }
-                        if attachment is not None:
-                            file_bytes = attachment.read()
-                            payload["attachment"] = base64.b64encode(file_bytes).decode("utf-8")
-                            payload["attachment_name"] = attachment.name
+                        if attachments:
+                            for att in attachments:
+                                file_bytes = att.read()
+                                payload["attachments"].append({
+                                    "data": base64.b64encode(file_bytes).decode("utf-8"),
+                                    "name": att.name
+                                })
                         try:
                             r = requests.post(WEBHOOK_URL, json=payload, timeout=30)
                             if r.status_code == 200:
