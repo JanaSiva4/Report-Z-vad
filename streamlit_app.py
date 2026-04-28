@@ -35,6 +35,15 @@ if "dashboard_auth" not in st.session_state:
     st.session_state.dashboard_auth = False
 if "days_filter" not in st.session_state:
     st.session_state.days_filter = "30"
+if "form_submitted" not in st.session_state:
+    st.session_state.form_submitted = False
+# Uchování hodnot formuláře
+for key in ["f_reported_by","f_department_select","f_department_custom","f_technology_select",
+            "f_technology_custom","f_location","f_priority","f_description","f_note"]:
+    if key not in st.session_state:
+        st.session_state[key] = "" if key != "f_priority" else "Medium"
+        if key == "f_department_select": st.session_state[key] = ""
+        if key == "f_technology_select": st.session_state[key] = ""
 
 st.markdown("""
 <style>
@@ -125,69 +134,100 @@ if st.session_state.page == "form":
         st.markdown("<h1 style='text-align:center'>🛠️ Technical Fault Report</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;color:#64748b;margin-bottom:1.5rem'>Please fill in the technical details of the issue. The information will be immediately sent for resolution.</p>", unsafe_allow_html=True)
 
-        with st.form("service_desk", clear_on_submit=True):
-            reported_by = st.text_input("👤 Reported by *")
-            col1, col2 = st.columns(2)
-            with col1:
-                department_select = st.selectbox("📍 1. Department *", options=[""] + DEPARTMENTS, index=0)
-                if department_select == "➕ Jiné / Other":
-                    department_custom = st.text_input("Enter department / Zadejte oddělení")
-                else:
-                    department_custom = ""
-            with col2:
-                technology_select = st.selectbox("⚙️ 2. Technology *", options=[""] + TECHNOLOGIES, index=0)
-                if technology_select == "➕ Jiné / Other":
-                    technology_custom = st.text_input("Enter technology / Zadejte technologii")
-                else:
-                    technology_custom = ""
-            col3, col4 = st.columns(2)
-            with col3:
-                location = st.text_input("🏢 3. Location *")
-            with col4:
-                priority = st.selectbox("⚡ 4. Priority", ["Low", "Medium", "High"], index=1)
-            description = st.text_area("📝 Detailed fault description *", height=220, placeholder="Describe the technical issue...")
-            note = st.text_area("💡 Additional note (optional)", height=80)
-            attachment = st.file_uploader("📎 Attachment (optional)", type=["jpg", "jpeg", "png", "pdf"])
-            st.markdown("<br>", unsafe_allow_html=True)
-            submit = st.form_submit_button("SUBMIT REPORT", use_container_width=True)
+        # Pokud byl úspěšně odeslán, zobrazíme zprávu a tlačítko pro nové hlášení
+        if st.session_state.form_submitted:
+            st.success("✅ Report submitted successfully.")
+            st.info("The record has been created and sent to the Teams channel.")
+            if st.button("➕ Nové hlášení", use_container_width=True):
+                for key in ["f_reported_by","f_department_select","f_department_custom",
+                            "f_technology_select","f_technology_custom","f_location",
+                            "f_description","f_note"]:
+                    st.session_state[key] = ""
+                st.session_state.f_priority = "Medium"
+                st.session_state.form_submitted = False
+                st.rerun()
+        else:
+            with st.form("service_desk", clear_on_submit=False):
+                reported_by = st.text_input("👤 Reported by *", value=st.session_state.f_reported_by)
+                col1, col2 = st.columns(2)
+                with col1:
+                    dept_options = [""] + DEPARTMENTS
+                    dept_idx = dept_options.index(st.session_state.f_department_select) if st.session_state.f_department_select in dept_options else 0
+                    department_select = st.selectbox("📍 1. Department *", options=dept_options, index=dept_idx)
+                    if department_select == "➕ Jiné / Other":
+                        department_custom = st.text_input("Enter department / Zadejte oddělení", value=st.session_state.f_department_custom)
+                    else:
+                        department_custom = ""
+                with col2:
+                    tech_options_form = [""] + TECHNOLOGIES
+                    tech_idx = tech_options_form.index(st.session_state.f_technology_select) if st.session_state.f_technology_select in tech_options_form else 0
+                    technology_select = st.selectbox("⚙️ 2. Technology *", options=tech_options_form, index=tech_idx)
+                    if technology_select == "➕ Jiné / Other":
+                        technology_custom = st.text_input("Enter technology / Zadejte technologii", value=st.session_state.f_technology_custom)
+                    else:
+                        technology_custom = ""
+                col3, col4 = st.columns(2)
+                with col3:
+                    location = st.text_input("🏢 3. Location *", value=st.session_state.f_location)
+                with col4:
+                    pri_options = ["Low", "Medium", "High"]
+                    pri_idx = pri_options.index(st.session_state.f_priority) if st.session_state.f_priority in pri_options else 1
+                    priority = st.selectbox("⚡ 4. Priority", pri_options, index=pri_idx)
+                description = st.text_area("📝 Detailed fault description *", height=220,
+                    placeholder="Describe the technical issue...", value=st.session_state.f_description)
+                note = st.text_area("💡 Additional note (optional)", height=80, value=st.session_state.f_note)
+                attachment = st.file_uploader("📎 Attachment (optional)", type=["jpg", "jpeg", "png", "pdf"])
+                st.markdown("<br>", unsafe_allow_html=True)
+                submit = st.form_submit_button("SUBMIT REPORT", use_container_width=True)
 
-            if submit:
-                department = department_custom if department_select == "➕ Jiné / Other" else department_select
-                technology = technology_custom if technology_select == "➕ Jiné / Other" else technology_select
-                if not reported_by:
-                    st.warning("⚠️ Please fill in your name.")
-                elif not department:
-                    st.warning("⚠️ Please select or enter a department.")
-                elif not technology:
-                    st.warning("⚠️ Please select or enter a technology.")
-                elif not location:
-                    st.warning("⚠️ Please fill in the location.")
-                elif not description:
-                    st.warning("⚠️ The 'Detailed fault description' field is required.")
-                else:
-                    payload = {
-                        "reported_by": reported_by, "department": department,
-                        "technology": technology, "location": location,
-                        "priority": priority, "description": description,
-                        "note": note, "attachment": None, "attachment_name": None
-                    }
-                    if attachment is not None:
-                        file_bytes = attachment.read()
-                        payload["attachment"] = base64.b64encode(file_bytes).decode("utf-8")
-                        payload["attachment_name"] = attachment.name
-                    try:
-                        r = requests.post(WEBHOOK_URL, json=payload, timeout=30)
-                        if r.status_code == 200:
-                            progress_bar = st.progress(0)
-                            for p in range(100):
-                                time.sleep(0.005)
-                                progress_bar.progress(p + 1)
-                            st.success("✅ Report submitted successfully.")
-                            st.info("The record has been created and sent to the Teams channel.")
-                        else:
+                if submit:
+                    # Uložíme hodnoty do session state pro případ chyby
+                    st.session_state.f_reported_by = reported_by
+                    st.session_state.f_department_select = department_select
+                    st.session_state.f_department_custom = department_custom
+                    st.session_state.f_technology_select = technology_select
+                    st.session_state.f_technology_custom = technology_custom
+                    st.session_state.f_location = location
+                    st.session_state.f_priority = priority
+                    st.session_state.f_description = description
+                    st.session_state.f_note = note
+
+                    department = department_custom if department_select == "➕ Jiné / Other" else department_select
+                    technology = technology_custom if technology_select == "➕ Jiné / Other" else technology_select
+                    if not reported_by:
+                        st.warning("⚠️ Please fill in your name.")
+                    elif not department:
+                        st.warning("⚠️ Please select or enter a department.")
+                    elif not technology:
+                        st.warning("⚠️ Please select or enter a technology.")
+                    elif not location:
+                        st.warning("⚠️ Please fill in the location.")
+                    elif not description:
+                        st.warning("⚠️ The 'Detailed fault description' field is required.")
+                    else:
+                        payload = {
+                            "reported_by": reported_by, "department": department,
+                            "technology": technology, "location": location,
+                            "priority": priority, "description": description,
+                            "note": note, "attachment": None, "attachment_name": None
+                        }
+                        if attachment is not None:
+                            file_bytes = attachment.read()
+                            payload["attachment"] = base64.b64encode(file_bytes).decode("utf-8")
+                            payload["attachment_name"] = attachment.name
+                        try:
+                            r = requests.post(WEBHOOK_URL, json=payload, timeout=30)
+                            if r.status_code == 200:
+                                progress_bar = st.progress(0)
+                                for p in range(100):
+                                    time.sleep(0.005)
+                                    progress_bar.progress(p + 1)
+                                st.session_state.form_submitted = True
+                                st.rerun()
+                            else:
+                                st.error("❌ Connection error. Please check your connection to the Alza network (VPN).")
+                        except:
                             st.error("❌ Connection error. Please check your connection to the Alza network (VPN).")
-                    except:
-                        st.error("❌ Connection error. Please check your connection to the Alza network (VPN).")
 
 # ==================== DASHBOARD ====================
 elif st.session_state.page == "dashboard":
