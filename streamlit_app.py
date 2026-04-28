@@ -16,9 +16,9 @@ APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwY2WxHmmw27DwsB3L24E
 WEBHOOK_URL = "https://n8n.dev.gcp.alza.cz/webhook/54ef8aa9-e750-4e22-9dad-3b4969e05053"
 
 DEPARTMENTS = [
-    "předák balení F1", "předák balení F2", "předák AS",
-    "předák nakládka F1", "předák nakládka F2", "předák doplňování F2",
-    "předák SPO", "předák BPO", "VS příjem", "VS potvrzování",
+    "balení F1", "balení F2", "AS",
+    "nakládka F1", "nakládka F2", "doplňování F2",
+    "SPO", "BPO", "VS příjem", "VS potvrzování",
     "VS balení", "VS pick AS", "VS nakládka", "Specialista AS",
     "Specialista IT", "Vedení LC", "➕ Jiné / Other"
 ]
