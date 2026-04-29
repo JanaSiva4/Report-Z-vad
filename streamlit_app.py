@@ -170,11 +170,11 @@ if st.session_state.page == "form":
                 try:
                     r = requests.post(WEBHOOK_URL, json=payload_as, timeout=30)
                     if r.status_code == 200:
-                        st.error("🚨 Ticket AS odeslán do Teams!")
+                        st.success("🚨 Ticket AS byl odeslán do Teams!")
                     else:
-                        st.warning("❌ Nepodařilo se odeslat — zkontroluj VPN.")
+                        st.error("❌ Nepodařilo se odeslat — zkontroluj VPN.")
                 except:
-                    st.warning("❌ Nepodařilo se odeslat — zkontroluj VPN.")
+                    st.error("❌ Nepodařilo se odeslat — zkontroluj VPN.")
 
             st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
