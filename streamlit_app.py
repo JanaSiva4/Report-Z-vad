@@ -156,7 +156,7 @@ if st.session_state.page == "form":
             </style>
             """, unsafe_allow_html=True)
 
-            if st.button("🚨 REQUEST FOR AS", use_container_width=True, type="primary"):
+            if st.button("🚨 POŽADAVEK NA TECHNIKA AS", use_container_width=True, type="primary"):
                 payload_as = {
                     "reported_by": "AS Quick Alert",
                     "department": "—",
@@ -169,7 +169,7 @@ if st.session_state.page == "form":
                 }
                 try:
                     r = requests.post(WEBHOOK_URL, json=payload_as, timeout=30)
-                    if r.status_code == 200:
+                    if r.status_code in [200, 201, 202]:
                         st.success("🚨 Ticket AS byl odeslán do Teams!")
                     else:
                         st.error("❌ Nepodařilo se odeslat — zkontroluj VPN.")
@@ -251,7 +251,7 @@ if st.session_state.page == "form":
                                 })
                         try:
                             r = requests.post(WEBHOOK_URL, json=payload, timeout=30)
-                            if r.status_code == 200:
+                            if r.status_code in [200, 201, 202]:
                                 progress_bar = st.progress(0)
                                 for p in range(100):
                                     time.sleep(0.005)
