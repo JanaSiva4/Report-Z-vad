@@ -156,7 +156,7 @@ if st.session_state.page == "form":
             </style>
             """, unsafe_allow_html=True)
 
-            if st.button("🚨 REGUESRT FOR AS", use_container_width=True, type="primary"):
+            if st.button("🚨 REGUEST FOR AS", use_container_width=True, type="primary"):
                 payload_as = {
                     "reported_by": "AS Quick Alert",
                     "department": "—",
