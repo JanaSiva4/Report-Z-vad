@@ -163,7 +163,7 @@ if st.session_state.page == "form":
                     "technology": "AS",
                     "location": "—",
                     "priority": "High",
-                    "description": "🚨 POŽADAVEK NA TECHNIKA AS — okamžitý zásah potřebný",
+                    "description": "🚨 Reguest for AS — okamžitý zásah potřebný",
                     "note": "",
                     "attachments": []
                 }
