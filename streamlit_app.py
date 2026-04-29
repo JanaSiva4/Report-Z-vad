@@ -16,9 +16,9 @@ APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwY2WxHmmw27DwsB3L24E
 WEBHOOK_URL = "https://n8n.dev.gcp.alza.cz/webhook/54ef8aa9-e750-4e22-9dad-3b4969e05053"
 
 DEPARTMENTS = [
-    "balení F1", "balení F2", "AS",
-    "nakládka F1", "nakládka F2", "doplňování F2",
-    "SPO", "BPO", "VS příjem", "VS potvrzování",
+    "předák balení F1", "předák balení F2", "předák AS",
+    "předák nakládka F1", "předák nakládka F2", "předák doplňování F2",
+    "předák SPO", "předák BPO", "VS příjem", "VS potvrzování",
     "VS balení", "VS pick AS", "VS nakládka", "Specialista AS",
     "Specialista IT", "Vedení LC", "➕ Jiné / Other"
 ]
@@ -147,7 +147,38 @@ if st.session_state.page == "form":
                 st.session_state.form_submitted = False
                 st.rerun()
         else:
-            with st.form("service_desk", clear_on_submit=False):
+            # RYCHLÉ TLAČÍTKO AS
+        st.markdown("""
+        <style>
+        div[data-testid="stButton"] button[kind="primary"].as-btn {
+            background-color: #dc2626 !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+        if st.button("🚨 POŽADAVEK NA TECHNIKA AS", use_container_width=True, type="primary"):
+            payload_as = {
+                "reported_by": "AS Quick Alert",
+                "department": "—",
+                "technology": "AS",
+                "location": "—",
+                "priority": "High",
+                "description": "🚨 POŽADAVEK NA TECHNIKA AS — okamžitý zásah potřebný",
+                "note": "",
+                "attachments": []
+            }
+            try:
+                r = requests.post(WEBHOOK_URL, json=payload_as, timeout=30)
+                if r.status_code == 200:
+                    st.error("🚨 Ticket AS odeslán do Teams!")
+                else:
+                    st.warning("❌ Nepodařilo se odeslat — zkontroluj VPN.")
+            except:
+                st.warning("❌ Nepodařilo se odeslat — zkontroluj VPN.")
+
+        st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+
+        with st.form("service_desk", clear_on_submit=False):
                 reported_by = st.text_input("👤 Reported by *", value=st.session_state.f_reported_by)
                 col1, col2 = st.columns(2)
                 with col1:
