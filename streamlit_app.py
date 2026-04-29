@@ -17,7 +17,7 @@ WEBHOOK_URL = "https://n8n.dev.gcp.alza.cz/webhook/54ef8aa9-e750-4e22-9dad-3b496
 
 DEPARTMENTS = [
     "balení F1", "balení F2", "AS",
-    "nakládka F1", "nakládka F2", "doplňování F2",
+    "nakládka F1", "akládka F2", "doplňování F2",
     "SPO", "BPO", "VS příjem", "VS potvrzování",
     "VS balení", "VS pick AS", "VS nakládka", "Specialista AS",
     "Specialista IT", "Vedení LC", "➕ Jiné / Other"
@@ -156,14 +156,14 @@ if st.session_state.page == "form":
             </style>
             """, unsafe_allow_html=True)
 
-            if st.button("🚨 Reguest for AS", use_container_width=True, type="primary"):
+            if st.button("🚨 REGUEST FOR AS", use_container_width=True, type="primary"):
                 payload_as = {
                     "reported_by": "AS Quick Alert",
                     "department": "—",
                     "technology": "AS",
                     "location": "—",
                     "priority": "High",
-                    "description": "🚨 Reguest for AS — okamžitý zásah potřebný",
+                    "description": "🚨 POŽADAVEK NA TECHNIKA AS / REGUEST FOR AS — okamžitý zásah potřebný",
                     "note": "",
                     "attachments": []
                 }
