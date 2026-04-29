@@ -156,7 +156,7 @@ if st.session_state.page == "form":
             </style>
             """, unsafe_allow_html=True)
 
-            if st.button("🚨 POŽADAVEK NA TECHNIKA AS", use_container_width=True, type="primary"):
+            if st.button("🚨 Reguest for AS", use_container_width=True, type="primary"):
                 payload_as = {
                     "reported_by": "AS Quick Alert",
                     "department": "—",
