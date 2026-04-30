@@ -415,7 +415,7 @@ elif st.session_state.page == "dashboard":
     st.markdown("---")
 
     # METRIKY
-m1, m2, m3, m4, m5, m6, m7, m8 = st.columns(8)
+    m1, m2, m3, m4, m5, m6, m7, m8 = st.columns(8)
     m1.markdown(f"""<div class='metric-box'>
         <div class='metric-num'>{total}</div>
         <div class='metric-lbl'>📋 Celkem závad</div>
@@ -434,7 +434,7 @@ m1, m2, m3, m4, m5, m6, m7, m8 = st.columns(8)
     if m4.button(f"🔧 V řešení: {v_reseni}", use_container_width=True):
         st.session_state.show_v_reseni = not st.session_state.get("show_v_reseni", False)
     m4.markdown(f"<div style='text-align:center;font-size:0.65rem;color:#94a3b8;font-style:italic'>klikni pro detail</div>", unsafe_allow_html=True)
-    if st.session_state.get("show_v_reseni", False):
+    if st.session_state.show_v_reseni = not st.session_state.get("show_v_reseni", False)
         st.markdown("### 🔧 Závady V řešení — čeká na servis / díl")
         vr = dff[dff["v_reseni"]][["Čas nahlášení", "Technologie", "Místo", "Priorita", "Popis", "Nahlásil", "Popis řešení", "Čas reakce"]].copy()
         vr["Čas nahlášení"] = vr["Čas nahlášení"].dt.strftime("%d.%m. %H:%M")
