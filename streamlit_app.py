@@ -158,7 +158,7 @@ if st.session_state.page == "form":
 
             if st.button("🚨 REGUEST FOR AS", use_container_width=True, type="primary"):
                 payload_as = {
-                    "reported_by": "AS Quick Alert",
+                    "reported_by": "Výpadek AS",
                     "department": "—",
                     "technology": "AS",
                     "location": "—",
