@@ -35,6 +35,8 @@ if "dashboard_auth" not in st.session_state:
     st.session_state.dashboard_auth = False
 if "days_filter" not in st.session_state:
     st.session_state.days_filter = "30"
+if "as_clicked" not in st.session_state:
+    st.session_state.as_clicked = False
 if "form_submitted" not in st.session_state:
     st.session_state.form_submitted = False
 # Uchování hodnot formuláře
@@ -157,24 +159,39 @@ if st.session_state.page == "form":
             """, unsafe_allow_html=True)
 
             if st.button("🚨 REGUEST FOR AS", use_container_width=True, type="primary"):
-                payload_as = {
-                    "reported_by": "Výpadek AS",
-                    "department": "—",
-                    "technology": "AS",
-                    "location": "—",
-                    "priority": "High",
-                    "description": "🚨 POŽADAVEK NA TECHNIKA AS/ REGUEST FOR AS — okamžitý zásah potřebný",
-                    "note": "",
-                    "attachments": []
-                }
-                try:
-                    r = requests.post(WEBHOOK_URL, json=payload_as, timeout=30)
-                    if r.status_code in [200, 201, 202]:
-                        st.success("🚨 Ticket AS byl odeslán do Teams!")
-                    else:
-                        st.error("❌ Nepodařilo se odeslat — zkontroluj VPN.")
-                except:
-                    st.error("❌ Nepodařilo se odeslat — zkontroluj VPN.")
+                st.session_state.as_clicked = True
+
+            if st.session_state.get("as_clicked", False):
+                as_misto = st.text_input("📍 Zadej místo závady AS *", key="as_misto_input")
+                col_as1, col_as2 = st.columns(2)
+                with col_as1:
+                    if st.button("✅ Odeslat ticket AS", use_container_width=True):
+                        if not as_misto:
+                            st.warning("⚠️ Zadej místo.")
+                        else:
+                            payload_as = {
+                                "reported_by": "Výpadek AS",
+                                "department": "—",
+                                "technology": "AS",
+                                "location": as_misto,
+                                "priority": "High",
+                                "description": "🚨 POŽADAVEK NA TECHNIKA AS/ REGUEST FOR AS — okamžitý zásah potřebný",
+                                "note": "",
+                                "attachments": []
+                            }
+                            try:
+                                r = requests.post(WEBHOOK_URL, json=payload_as, timeout=30)
+                                if r.status_code in [200, 201, 202]:
+                                    st.success("🚨 Ticket AS byl odeslán do Teams!")
+                                    st.session_state.as_clicked = False
+                                else:
+                                    st.error("❌ Nepodařilo se odeslat — zkontroluj VPN.")
+                            except:
+                                st.error("❌ Nepodařilo se odeslat — zkontroluj VPN.")
+                with col_as2:
+                    if st.button("✖ Zrušit", use_container_width=True):
+                        st.session_state.as_clicked = False
+                        st.rerun()
 
             st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
