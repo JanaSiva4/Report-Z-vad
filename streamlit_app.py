@@ -37,6 +37,8 @@ if "days_filter" not in st.session_state:
     st.session_state.days_filter = "30"
 if "as_clicked" not in st.session_state:
     st.session_state.as_clicked = False
+if "show_v_reseni" not in st.session_state:
+    st.session_state.show_v_reseni = False
 if "form_submitted" not in st.session_state:
     st.session_state.form_submitted = False
 # Uchování hodnot formuláře
@@ -433,14 +435,8 @@ elif st.session_state.page == "dashboard":
     </div>""", unsafe_allow_html=True)
     if m4.button(f"🔧 V řešení: {v_reseni}", use_container_width=True):
         st.session_state.show_v_reseni = not st.session_state.get("show_v_reseni", False)
-    m4.markdown(f"<div style='text-align:center;font-size:0.65rem;color:#94a3b8;font-style:italic'>klikni pro detail</div>", unsafe_allow_html=True)
-    if st.session_state.show_v_reseni = not st.session_state.get("show_v_reseni", False)
-        st.markdown("### 🔧 Závady V řešení — čeká na servis / díl")
-        vr = dff[dff["v_reseni"]][["Čas nahlášení", "Technologie", "Místo", "Priorita", "Popis", "Nahlásil", "Popis řešení", "Čas reakce"]].copy()
-        vr["Čas nahlášení"] = vr["Čas nahlášení"].dt.strftime("%d.%m. %H:%M")
-        vr["Čas reakce"] = vr["Čas reakce"].dt.strftime("%d.%m. %H:%M")
-        st.dataframe(vr, use_container_width=True, hide_index=True)
-        st.markdown("---")
+        st.rerun()
+    m4.markdown("<div style='text-align:center;font-size:0.65rem;color:#94a3b8;font-style:italic'>klikni pro detail</div>", unsafe_allow_html=True)
     m5.markdown(f"""<div class='metric-box'>
         <div class='metric-num-blue'>{round(avg_reakce,1) if not pd.isna(avg_reakce) else '—'} min</div>
         <div class='metric-lbl'>⏱️ Prům. reakce</div>
@@ -464,6 +460,16 @@ elif st.session_state.page == "dashboard":
         <div class='metric-lbl'>📈 vs předchozí</div>
         <div class='metric-desc'>oproti min. období</div>
     </div>""", unsafe_allow_html=True)
+
+    if st.session_state.get("show_v_reseni", False):
+        st.markdown("### 🔧 Závady V řešení — čeká na servis / díl")
+        vr_cols = ["Čas nahlášení", "Technologie", "Místo", "Priorita", "Popis", "Nahlásil", "Popis řešení", "Čas reakce"]
+        vr = dff[dff["v_reseni"]][[c for c in vr_cols if c in dff.columns]].copy()
+        vr["Čas nahlášení"] = vr["Čas nahlášení"].dt.strftime("%d.%m. %H:%M")
+        if "Čas reakce" in vr.columns:
+            vr["Čas reakce"] = vr["Čas reakce"].dt.strftime("%d.%m. %H:%M")
+        st.dataframe(vr, use_container_width=True, hide_index=True)
+
     st.markdown("---")
 
     # GRAFY řada 1
