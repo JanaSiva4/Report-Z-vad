@@ -433,7 +433,7 @@ elif st.session_state.page == "dashboard":
         <div class='metric-lbl'>⚠️ Nevyřešeno</div>
         <div class='metric-desc'>čeká na opravu</div>
     </div>""", unsafe_allow_html=True)
-     m4.markdown(f"""<div class='metric-box' onclick="window.location.reload()" style='cursor:pointer'>
+    m4.markdown(f"""<div class='metric-box' onclick="window.location.reload()" style='cursor:pointer'>
         <div class='metric-num' style='color:#f59e0b'>{v_reseni}</div>
         <div class='metric-lbl'>🔧 V řešení</div>
         <div class='metric-desc'>čeká na servis / díl — klikni pro detail</div>
