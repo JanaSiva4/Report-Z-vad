@@ -160,7 +160,7 @@ if st.session_state.page == "form":
             </style>
             """, unsafe_allow_html=True)
 
-            if st.button("🚨 REGUEST FOR AS", use_container_width=True, type="primary"):
+            if st.button("🚨 REPORT AN AS OUTAGE", use_container_width=True, type="primary"):
                 st.session_state.as_clicked = True
 
             if st.session_state.get("as_clicked", False):
