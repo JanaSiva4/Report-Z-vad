@@ -431,11 +431,16 @@ elif st.session_state.page == "dashboard":
         <div class='metric-lbl'>⚠️ Nevyřešeno</div>
         <div class='metric-desc'>čeká na opravu</div>
     </div>""", unsafe_allow_html=True)
-    m4.markdown(f"""<div class='metric-box'>
-        <div class='metric-num' style='color:#f59e0b'>{v_reseni}</div>
-        <div class='metric-lbl'>🔧 V řešení</div>
-        <div class='metric-desc'>čeká na servis / díl</div>
-    </div>""", unsafe_allow_html=True)
+     if m4.button(f"🔧 V řešení: {v_reseni}", use_container_width=True):
+        st.session_state.show_v_reseni = not st.session_state.get("show_v_reseni", False)
+    m4.markdown(f"<div style='text-align:center;font-size:0.65rem;color:#94a3b8;font-style:italic'>čeká na servis / díl — klikni pro detail</div>", unsafe_allow_html=True)
+    if st.session_state.get("show_v_reseni", False):
+        st.markdown("### 🔧 Závady V řešení — čeká na servis / díl")
+        vr = dff[dff["v_reseni"]][["Čas nahlášení", "Technologie", "Místo", "Priorita", "Popis", "Nahlásil", "Popis řešení", "Čas reakce"]].copy()
+        vr["Čas nahlášení"] = vr["Čas nahlášení"].dt.strftime("%d.%m. %H:%M")
+        vr["Čas reakce"] = vr["Čas reakce"].dt.strftime("%d.%m. %H:%M")
+        st.dataframe(vr, use_container_width=True, hide_index=True)
+        st.markdown("---")
     m5.markdown(f"""<div class='metric-box'>
         <div class='metric-num-blue'>{round(avg_reakce,1) if not pd.isna(avg_reakce) else '—'} min</div>
         <div class='metric-lbl'>⏱️ Prům. reakce</div>
