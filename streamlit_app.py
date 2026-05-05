@@ -160,26 +160,16 @@ if st.session_state.page == "form":
             </style>
             """, unsafe_allow_html=True)
 
-            if st.button("🚨 Výpadek AS", use_container_width=True, type="primary"):
-                st.session_state.as_clicked = True
-
-            if st.session_state.get("as_clicked", False):
-                as_misto = st.text_input("📍 Zadej místo závady AS *", key="as_misto_input")
-                col_as1, col_as2 = st.columns(2)
-                with col_as1:
-                    if st.button("✅ Odeslat ticket AS", use_container_width=True):
-                        if not as_misto:
-                            st.warning("⚠️ Zadej místo.")
-                        else:
-                            payload_as = {
-                                "reported_by": "Výpadek AS",
-                                "department": "—",
-                                "technology": "AS",
-                                "location": as_misto,
-                                "priority": "High",
-                                "description": "🚨 POŽADAVEK NA TECHNIKA AS/ REGUEST FOR AS — okamžitý zásah potřebný",
-                                "note": "",
-                                "attachments": []
+            if st.button("🚨 VÝPADEK AS", use_container_width=True, type="primary"):
+                payload_as = {
+                    "reported_by": "Výpadek AS",
+                    "department": "—",
+                    "technology": "Výpadek AS",
+                    "location": "—",
+                    "priority": "High",
+                    "description": "🚨 POŽADAVEK NA TECHNIKA AS — okamžitý zásah potřebný",
+                    "note": "",
+                    "attachments": []
                             }
                             try:
                                 r = requests.post(WEBHOOK_URL, json=payload_as, timeout=30)
