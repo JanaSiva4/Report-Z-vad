@@ -16,9 +16,9 @@ APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwY2WxHmmw27DwsB3L24E
 WEBHOOK_URL = "https://n8n.dev.gcp.alza.cz/webhook/54ef8aa9-e750-4e22-9dad-3b4969e05053"
 
 DEPARTMENTS = [
-    "balení F1", "balení F2", "AS",
-    "nakládka F1", "nakládka F2", "doplňování F2",
-    "SPO", "BPO", "VS příjem", "VS potvrzování",
+    "předák balení F1", "předák balení F2", "předák AS",
+    "předák nakládka F1", "předák nakládka F2", "předák doplňování F2",
+    "předák SPO", "předák BPO", "VS příjem", "VS potvrzování",
     "VS balení", "VS pick AS", "VS nakládka", "Specialista AS",
     "Specialista IT", "Vedení LC", "➕ Jiné / Other"
 ]
@@ -140,16 +140,25 @@ if st.session_state.page == "form":
 
         # Pokud byl úspěšně odeslán, zobrazíme zprávu a tlačítko pro nové hlášení
         if st.session_state.form_submitted:
-            st.success("✅ Report submitted successfully.")
-            st.info("The record has been created and sent to the Teams channel.")
-            if st.button("➕ Nové hlášení", use_container_width=True):
-                for key in ["f_reported_by","f_department_select","f_department_custom",
-                            "f_technology_select","f_technology_custom","f_location",
-                            "f_description","f_note"]:
-                    st.session_state[key] = ""
-                st.session_state.f_priority = "Medium"
-                st.session_state.form_submitted = False
-                st.rerun()
+            st.markdown("""
+            <div style='text-align:center; padding: 3rem 1rem;'>
+                <div style='font-size: 5rem;'>✅</div>
+                <h1 style='color: #16a34a; font-size: 2rem; margin: 1rem 0;'>Ticket byl odeslán do Teams!</h1>
+                <p style='color: #64748b; font-size: 1rem; margin-bottom: 2rem;'>
+                    Zpráva byla úspěšně doručena do kanálu Hlášení závad LC4.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            _, btn_col, _ = st.columns([1, 2, 1])
+            with btn_col:
+                if st.button("➕ Odeslat nové hlášení", use_container_width=True, type="primary"):
+                    for key in ["f_reported_by","f_department_select","f_department_custom",
+                                "f_technology_select","f_technology_custom","f_location",
+                                "f_description","f_note"]:
+                        st.session_state[key] = ""
+                    st.session_state.f_priority = "Medium"
+                    st.session_state.form_submitted = False
+                    st.rerun()
         else:
             # RYCHLÉ TLAČÍTKO AS
             st.markdown("""
@@ -160,7 +169,7 @@ if st.session_state.page == "form":
             </style>
             """, unsafe_allow_html=True)
 
-            if st.button("🚨 VÝPADEK AS", use_container_width=True, type="primary"):
+            if st.button("🚨 POŽADAVEK NA TECHNIKA AS", use_container_width=True, type="primary"):
                 payload_as = {
                     "reported_by": "Výpadek AS",
                     "department": "—",
