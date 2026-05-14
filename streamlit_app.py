@@ -41,7 +41,8 @@ if "show_v_reseni" not in st.session_state:
     st.session_state.show_v_reseni = False
 if "form_submitted" not in st.session_state:
     st.session_state.form_submitted = False
-# Uchování hodnot formuláře
+if "as_sending" not in st.session_state:
+    st.session_state.as_sending = False
 for key in ["f_reported_by","f_department_select","f_department_custom","f_technology_select",
             "f_technology_custom","f_location","f_priority","f_description","f_note"]:
     if key not in st.session_state:
@@ -138,20 +139,27 @@ if st.session_state.page == "form":
         st.markdown("<h1 style='text-align:center'>🛠️ Technical Fault Report</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;color:#64748b;margin-bottom:1.5rem'>Please fill in the technical details of the issue. The information will be immediately sent for resolution.</p>", unsafe_allow_html=True)
 
-        # Pokud byl úspěšně odeslán, zobrazíme zprávu a tlačítko pro nové hlášení
         if st.session_state.form_submitted:
-            st.success("✅ Report submitted successfully.")
-            st.info("The record has been created and sent to the Teams channel.")
-            if st.button("➕ Nové hlášení", use_container_width=True):
-                for key in ["f_reported_by","f_department_select","f_department_custom",
-                            "f_technology_select","f_technology_custom","f_location",
-                            "f_description","f_note"]:
-                    st.session_state[key] = ""
-                st.session_state.f_priority = "Medium"
-                st.session_state.form_submitted = False
-                st.rerun()
+            st.markdown("""
+            <div style='text-align:center; padding: 3rem 1rem;'>
+                <div style='font-size: 5rem;'>✅</div>
+                <h1 style='color: #16a34a; font-size: 2rem; margin: 1rem 0;'>Ticket byl odeslán do Teams!</h1>
+                <p style='color: #64748b; font-size: 1rem; margin-bottom: 2rem;'>
+                    Zpráva byla úspěšně doručena do kanálu Hlášení závad LC4.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            _, btn_col, _ = st.columns([1, 2, 1])
+            with btn_col:
+                if st.button("➕ Odeslat nové hlášení", use_container_width=True, type="primary"):
+                    for key in ["f_reported_by","f_department_select","f_department_custom",
+                                "f_technology_select","f_technology_custom","f_location",
+                                "f_description","f_note"]:
+                        st.session_state[key] = ""
+                    st.session_state.f_priority = "Medium"
+                    st.session_state.form_submitted = False
+                    st.rerun()
         else:
-            # RYCHLÉ TLAČÍTKO AS
             st.markdown("""
             <style>
             div[data-testid="stButton"] button[kind="primary"].as-btn {
@@ -160,7 +168,12 @@ if st.session_state.page == "form":
             </style>
             """, unsafe_allow_html=True)
 
-            if st.button("🚨 VÝPADEK AS", use_container_width=True, type="primary"):
+            if not st.session_state.get("as_sending", False):
+                if st.button("🚨 VÝPADEK AS", use_container_width=True, type="primary"):
+                    st.session_state.as_sending = True
+                    st.rerun()
+            else:
+                st.button("⏳ Odesílám...", use_container_width=True, disabled=True)
                 payload_as = {
                     "reported_by": "Výpadek AS",
                     "department": "—",
@@ -179,10 +192,11 @@ if st.session_state.page == "form":
                         st.error("❌ Nepodařilo se odeslat — zkontroluj VPN.")
                 except:
                     st.error("❌ Nepodařilo se odeslat — zkontroluj VPN.")
+                st.session_state.as_sending = False
 
             st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
-        with st.form("service_desk", clear_on_submit=False):
+            with st.form("service_desk", clear_on_submit=False):
                 reported_by = st.text_input("👤 Reported by *", value=st.session_state.f_reported_by)
                 col1, col2 = st.columns(2)
                 with col1:
@@ -216,7 +230,6 @@ if st.session_state.page == "form":
                 submit = st.form_submit_button("SUBMIT REPORT", use_container_width=True)
 
                 if submit:
-                    # Uložíme hodnoty do session state pro případ chyby
                     st.session_state.f_reported_by = reported_by
                     st.session_state.f_department_select = department_select
                     st.session_state.f_department_custom = department_custom
@@ -302,7 +315,6 @@ elif st.session_state.page == "dashboard":
                     df[col] = df[col].dt.tz_convert("Europe/Prague")
             df["datum"] = df["Čas nahlášení"].dt.date
             df["den_tydne"] = df["Čas nahlášení"].dt.day_name()
-            # Vyřešeno = má Čas vyřešení NEBO Stav == Vyřešeno
             if "Stav" in df.columns:
                 df["vyreseno"] = df["Čas vyřešení"].notna() | df["Stav"].apply(lambda x: str(x).strip() == "Vyřešeno")
                 df["v_reseni"] = (~df["Čas vyřešení"].notna()) & df["Stav"].apply(lambda x: str(x).strip() == "V řešení")
@@ -326,7 +338,6 @@ elif st.session_state.page == "dashboard":
         st.warning("Žádná data k zobrazení.")
         st.stop()
 
-    # HEADER
     now_str = datetime.now().strftime("%d.%m.%Y %H:%M")
     col_header, col_logout = st.columns([8, 1])
     with col_header:
@@ -340,7 +351,6 @@ elif st.session_state.page == "dashboard":
 
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
-    # FILTRY — pill přepínače pro období + dropdowny pro technologii a prioritu
     col_f1, col_f2, col_f3, col_f4 = st.columns([2, 1, 1, 1])
     with col_f1:
         st.markdown("<div style='font-size:12px;color:#64748b;margin-bottom:4px'>📅 Období</div>", unsafe_allow_html=True)
@@ -370,7 +380,6 @@ elif st.session_state.page == "dashboard":
             st.cache_data.clear()
             st.rerun()
 
-    # FILTROVÁNÍ DAT
     dff = df.copy()
     if tech_filter != "Vše":
         dff = dff[dff["Technologie"] == tech_filter]
@@ -401,7 +410,6 @@ elif st.session_state.page == "dashboard":
 
     st.markdown("---")
 
-    # METRIKY
     m1, m2, m3, m4, m5, m6, m7, m8 = st.columns(8)
     m1.markdown(f"""<div class='metric-box'>
         <div class='metric-num'>{total}</div>
@@ -457,7 +465,6 @@ elif st.session_state.page == "dashboard":
 
     st.markdown("---")
 
-    # GRAFY řada 1
     col_g1, col_g2, col_g3 = st.columns([2, 1, 1])
     with col_g1:
         st.markdown("**📈 Závady za den**")
@@ -489,7 +496,6 @@ elif st.session_state.page == "dashboard":
         st.plotly_chart(fig_week, use_container_width=True)
         st.markdown(f"<div class='chart-desc'>Který den je nejvytíženější — červený sloupec = nejvíce závad ({max_day})</div>", unsafe_allow_html=True)
 
-    # GRAFY řada 2
     col_g4, col_g5, col_g6 = st.columns(3)
     with col_g4:
         st.markdown("**⚡ Podle priority**")
