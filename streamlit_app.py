@@ -318,7 +318,8 @@ elif st.session_state.page == "dashboard":
                     combined_text
                     .str.lower()
                     .str.normalize("NFD")
-                    .str.replace(r"[\u0300-\u036f]", "", regex=True)
+                    .str.encode("ascii", "ignore")
+                    .str.decode("ascii")
                 )
                 as_stop_mask = (
                     normalized_text.str.contains("system stop alert", na=False)
