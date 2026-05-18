@@ -309,6 +309,34 @@ elif st.session_state.page == "dashboard":
             df = pd.DataFrame(raw)
             if df.empty:
                 return df
+
+            # Normalize AutoStore stop-alert emails so dashboard charts count them as AS outages.
+            text_cols = [c for c in ["Popis", "Poznámka", "Nahlásil", "Technologie"] if c in df.columns]
+            if text_cols:
+                combined_text = df[text_cols].fillna("").astype(str).agg(" ".join, axis=1)
+                normalized_text = (
+                    combined_text
+                    .str.lower()
+                    .str.normalize("NFD")
+                    .str.replace(r"[\u0300-\u036f]", "", regex=True)
+                )
+                as_stop_mask = (
+                    normalized_text.str.contains("system stop alert", na=False)
+                    | normalized_text.str.contains("autostore - system stop alert", na=False)
+                    | (
+                        normalized_text.str.contains("noreply-cubeanalytics@autostoresystem.com", na=False)
+                        & normalized_text.str.contains("has stopped", na=False)
+                    )
+                )
+                if as_stop_mask.any():
+                    if "Technologie" in df.columns:
+                        df.loc[as_stop_mask, "Technologie"] = "Výpadek AS"
+                    if "Oddělení" in df.columns:
+                        df.loc[as_stop_mask, "Oddělení"] = "AS"
+                    if "Místo" in df.columns:
+                        df.loc[as_stop_mask, "Místo"] = "AutoStore"
+                    if "Priorita" in df.columns:
+                        df.loc[as_stop_mask, "Priorita"] = "High"
             for col in ["Čas nahlášení", "Čas reakce", "Čas vyřešení"]:
                 if col in df.columns:
                     df[col] = pd.to_datetime(df[col], errors="coerce", utc=True)
