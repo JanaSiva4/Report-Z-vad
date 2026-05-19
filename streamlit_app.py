@@ -196,50 +196,43 @@ if st.session_state.page == "form":
 
             st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
-            with st.form("service_desk", clear_on_submit=False):
-                reported_by = st.text_input("👤 Reported by *", value=st.session_state.f_reported_by)
+            with st.container():
+                reported_by = st.text_input("👤 Reported by *", key="f_reported_by")
                 col1, col2 = st.columns(2)
                 with col1:
                     dept_options = [""] + DEPARTMENTS
-                    dept_idx = dept_options.index(st.session_state.f_department_select) if st.session_state.f_department_select in dept_options else 0
-                    department_select = st.selectbox("📍 1. Department *", options=dept_options, index=dept_idx)
+                    if st.session_state.f_department_select not in dept_options:
+                        st.session_state.f_department_select = ""
+                    department_select = st.selectbox("📍 1. Department *", options=dept_options, key="f_department_select")
                     if department_select == "➕ Jiné / Other":
-                        department_custom = st.text_input("Enter department / Zadejte oddělení", value=st.session_state.f_department_custom)
+                        department_custom = st.text_input("Enter department / Zadejte oddělení", key="f_department_custom")
                     else:
                         department_custom = ""
                 with col2:
                     tech_options_form = [""] + TECHNOLOGIES
-                    tech_idx = tech_options_form.index(st.session_state.f_technology_select) if st.session_state.f_technology_select in tech_options_form else 0
-                    technology_select = st.selectbox("⚙️ 2. Technology *", options=tech_options_form, index=tech_idx)
+                    if st.session_state.f_technology_select not in tech_options_form:
+                        st.session_state.f_technology_select = ""
+                    technology_select = st.selectbox("⚙️ 2. Technology *", options=tech_options_form, key="f_technology_select")
                     if technology_select == "➕ Jiné / Other":
-                        technology_custom = st.text_input("Enter technology / Zadejte technologii", value=st.session_state.f_technology_custom)
+                        technology_custom = st.text_input("Enter technology / Zadejte technologii", key="f_technology_custom")
                     else:
                         technology_custom = ""
                 col3, col4 = st.columns(2)
                 with col3:
-                    location = st.text_input("🏢 3. Location *", value=st.session_state.f_location)
+                    location = st.text_input("🏢 3. Location *", key="f_location")
                 with col4:
                     pri_options = ["Low", "Medium", "High"]
-                    pri_idx = pri_options.index(st.session_state.f_priority) if st.session_state.f_priority in pri_options else 1
-                    priority = st.selectbox("⚡ 4. Priority", pri_options, index=pri_idx)
+                    if st.session_state.f_priority not in pri_options:
+                        st.session_state.f_priority = "Medium"
+                    priority = st.selectbox("⚡ 4. Priority", pri_options, key="f_priority")
                 description = st.text_area("📝 Detailed fault description *", height=220,
-                    placeholder="Describe the technical issue...", value=st.session_state.f_description)
-                note = st.text_area("💡 Additional note (optional)", height=80, value=st.session_state.f_note)
+                    placeholder="Describe the technical issue...", key="f_description")
+                note = st.text_area("💡 Additional note (optional)", height=80, key="f_note")
                 attachments = st.file_uploader("📎 Attachments (optional)", type=["jpg", "jpeg", "png", "pdf"], accept_multiple_files=True)
                 st.markdown("<br>", unsafe_allow_html=True)
-                submit = st.form_submit_button("SUBMIT REPORT", use_container_width=True)
+                submit = st.button("SUBMIT REPORT", use_container_width=True, type="primary")
 
                 if submit:
-                    st.session_state.f_reported_by = reported_by
-                    st.session_state.f_department_select = department_select
-                    st.session_state.f_department_custom = department_custom
-                    st.session_state.f_technology_select = technology_select
-                    st.session_state.f_technology_custom = technology_custom
-                    st.session_state.f_location = location
-                    st.session_state.f_priority = priority
-                    st.session_state.f_description = description
-                    st.session_state.f_note = note
-
                     department = department_custom if department_select == "➕ Jiné / Other" else department_select
                     technology = technology_custom if technology_select == "➕ Jiné / Other" else technology_select
                     if not reported_by:
