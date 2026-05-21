@@ -41,8 +41,6 @@ if "show_v_reseni" not in st.session_state:
     st.session_state.show_v_reseni = False
 if "form_submitted" not in st.session_state:
     st.session_state.form_submitted = False
-if "as_sending" not in st.session_state:
-    st.session_state.as_sending = False
 for key in ["f_reported_by","f_department_select","f_department_custom","f_technology_select",
             "f_technology_custom","f_location","f_priority","f_description","f_note"]:
     if key not in st.session_state:
@@ -167,32 +165,6 @@ if st.session_state.page == "form":
             }
             </style>
             """, unsafe_allow_html=True)
-
-            if not st.session_state.get("as_sending", False):
-                if st.button("🚨 VÝPADEK AS", use_container_width=True, type="primary"):
-                    st.session_state.as_sending = True
-                    st.rerun()
-            else:
-                st.button("⏳ Odesílám...", use_container_width=True, disabled=True)
-                payload_as = {
-                    "reported_by": "Výpadek AS",
-                    "department": "—",
-                    "technology": "Výpadek AS",
-                    "location": "—",
-                    "priority": "High",
-                    "description": "🚨 POŽADAVEK NA TECHNIKA AS — okamžitý zásah potřebný",
-                    "note": "",
-                    "attachments": []
-                }
-                try:
-                    r = requests.post(WEBHOOK_URL, json=payload_as, timeout=30)
-                    if r.status_code in [200, 201, 202]:
-                        st.success("🚨 Ticket AS byl odeslán do Teams!")
-                    else:
-                        st.error("❌ Nepodařilo se odeslat — zkontroluj VPN.")
-                except:
-                    st.error("❌ Nepodařilo se odeslat — zkontroluj VPN.")
-                st.session_state.as_sending = False
 
             st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
