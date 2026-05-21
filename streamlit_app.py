@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide"
 )
 
-APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwY2WxHmmw27DwsB3L24ElvxYB9cQWBnervUhwOsGfoWA56E8Diw17PhATdIOMODgYIOw/exec"
+APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwwrbHz43C2OpVNfTwowuZx7IORiGf7xg9LzLusdKOFp28CPUtdQAmGt6ppx0BiTlg3nw/exec"
 WEBHOOK_URL = "https://n8n.dev.gcp.alza.cz/webhook/54ef8aa9-e750-4e22-9dad-3b4969e05053"
 
 DEPARTMENTS = [
