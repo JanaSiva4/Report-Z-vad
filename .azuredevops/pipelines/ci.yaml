@@ -1,0 +1,24 @@
+trigger:
+  tags:
+    include:
+      - "*"
+  branches:
+    include:
+      - develop
+      - feature/*
+      - release/*
+      - renovate/*
+      - hotfix/*
+
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: pipeline-templates/pipeline-templates
+      ref: refs/heads/support/v1.x
+
+extends:
+  template: k8s-dockerfile.yaml@templates
+  parameters:
+    containerImageRepository: "mhczlc4app"
+    serviceName: "mhczlc4app"

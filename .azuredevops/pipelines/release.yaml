@@ -1,0 +1,18 @@
+trigger:
+  branches:
+    include:
+      - main
+      - support/*
+
+resources:
+  repositories:
+    - repository: wiki
+      type: git
+      name: platform-gencode.wiki
+    - repository: templates
+      type: git
+      name: pipeline-templates/pipeline-templates
+      ref: refs/heads/support/v1.x
+
+extends:
+  template: release.yaml@templates

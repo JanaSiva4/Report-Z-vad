@@ -1,0 +1,31 @@
+trigger: none
+
+pool:
+  name: Web20
+
+resources:
+  pipelines:
+    - pipeline:   ci                                          # Name of the pipeline resource.
+      source:     mhczlc4App-ci                      # The name of the pipeline referenced by this pipeline resource.
+      trigger:    true                                        # Run app-cd pipeline when any run of packing-station-app-ci completes
+  repositories:
+    - repository: templates
+      type:       git
+      name:       pipeline-templates\pipeline-templates
+      ref:        refs/heads/support/v1.x
+    - repository: iacRepo
+      type:       git
+      name:       platform-gencode\mhczlc4                          # AzdoPojectName\iacRepositoryName
+
+extends:
+  template: gcp-promotion.yaml@templates
+  parameters:
+    #serviceName: "mhczlc4app"                                     # RepositoryName (lowercase)
+    deploymentType: "run"                                      # Deployment type - cloud run job
+    iacRepositoryName: "mhczlc4"                                     # iac repository name
+    serviceName: "mhczlc4app"
+    stages:
+      - environment: lab                                           # Azure DevOps environment
+        target:       "prj-gcp-l-plat-gencode-mhczlc4"                      # GCP-project name
+        gcpProjectId: "l-plat-gencode-mhczlc4"                              # GCP-project id
+        gcpRegion:    "europe-west4"                               # GCP region
