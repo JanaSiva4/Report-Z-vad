@@ -1,0 +1,11 @@
+trigger: none
+
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: pipeline-templates/pipeline-templates
+      ref: refs/heads/support/v1.x
+
+extends:
+  template: pr.yaml@templates
