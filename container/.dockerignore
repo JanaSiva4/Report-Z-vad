@@ -1,0 +1,14 @@
+.git/
+node_modules/
+__pycache__/
+*.pyc
+specs/
+docs/
+.specify/
+*.md
+.dockerignore
+Dockerfile
+docker-compose.yml
+.vscode/
+.idea/
+.DS_Store

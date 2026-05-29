@@ -1,0 +1,1331 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Maintenance Helpdesk CZLC4</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at top left, rgba(204, 251, 241, 0.55), transparent 32%),
+          linear-gradient(180deg, #f3f7f5 0%, #eef4f1 100%);
+        color: #172033;
+        font-family: Inter, Arial, sans-serif;
+      }
+      body.dark {
+        background:
+          radial-gradient(circle at top left, rgba(20, 184, 166, 0.22), transparent 34%),
+          linear-gradient(180deg, #111827 0%, #172033 100%);
+        color: #e5edf5;
+      }
+      main { width: min(1440px, calc(100vw - 40px)); margin: 0 auto; padding: 32px 0 56px; }
+      #formView, #loginPanel { width: min(980px, 100%); margin-left: auto; margin-right: auto; }
+      nav { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 520px; margin: 0 auto 24px; }
+      .top-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin: -6px 0 10px;
+      }
+      button, input, select, textarea { font: inherit; }
+      button {
+        min-height: 42px;
+        border: 1px solid #d8dee8;
+        border-radius: 8px;
+        background: white;
+        color: #2f3a4d;
+        cursor: pointer;
+        transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
+      }
+      button:hover {
+        transform: translateY(-1px);
+        border-color: #99f6e4;
+        box-shadow: 0 10px 22px rgba(15, 118, 110, 0.16);
+      }
+      button:active {
+        transform: translateY(0);
+        box-shadow: 0 4px 10px rgba(15, 118, 110, 0.12);
+      }
+      .tab-icon, .field-icon, .title-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: currentColor;
+      }
+      .tab-icon svg, .field-icon svg { width: 19px; height: 19px; stroke-width: 2.2; }
+      .title-icon svg { width: 32px; height: 32px; stroke-width: 2.2; }
+      .title-icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 10px;
+        border-radius: 14px;
+        color: #0f766e;
+        background: linear-gradient(135deg, #ccfbf1, #ecfdf5);
+        border: 1px solid #99f6e4;
+        box-shadow: 0 12px 24px rgba(15, 118, 110, 0.14);
+      }
+      nav button {
+        display: inline-flex;
+        gap: 9px;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+      }
+      button.active, .primary { background: #0f766e; border-color: #0f766e; color: white; }
+      button.active:hover, .primary:hover { background: #115e59; border-color: #115e59; }
+      .danger { width: 100%; border-color: #e0a3a3; color: #b42318; margin: 18px 0; }
+      .panel, .card {
+        background: white;
+        border: 1px solid #e1e6ef;
+        border-radius: 8px;
+        padding: 32px;
+      }
+      body.dark .panel, body.dark .card {
+        background: #1f2937;
+        border-color: #334155;
+      }
+      .card, .metric {
+        transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+      }
+      h1, h2, h3 { margin: 0 0 12px; }
+      h1 { text-align: center; font-size: 34px; }
+      .lead { text-align: center; color: #667085; max-width: 620px; margin: 0 auto 18px; }
+      form { display: grid; gap: 16px; }
+      label { display: grid; gap: 7px; color: #344054; font-weight: 600; }
+      body.dark label { color: #e2e8f0; }
+      .field-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .field-title .field-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        background: #ccfbf1;
+        color: #0f766e;
+        border: 1px solid #99f6e4;
+      }
+      .field-title .field-icon[data-icon="building"] { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+      .field-title .field-icon[data-icon="cpu"] { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+      .field-title .field-icon[data-icon="map"] { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+      .field-title .field-icon[data-icon="flag"] { background: #f5f3ff; color: #6d28d9; border-color: #ddd6fe; }
+      .field-title .field-icon[data-icon="message"] { background: #ecfeff; color: #0e7490; border-color: #a5f3fc; }
+      .field-title .field-icon[data-icon="note"] { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+      .field-title .field-icon[data-icon="paperclip"] { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+      input, select, textarea {
+        width: 100%;
+        border: 1px solid #d8dee8;
+        border-radius: 8px;
+        background: #f8fafc;
+        padding: 12px;
+      }
+      body.dark input, body.dark select, body.dark textarea {
+        background: #111827;
+        color: #e5edf5;
+        border-color: #475569;
+      }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .status { margin-top: 16px; color: #0f766e; font-weight: 700; }
+      .status-box {
+        margin-top: 16px;
+        padding: 14px 16px;
+        border-radius: 8px;
+        border: 1px solid #99f6e4;
+        background: #ecfdf5;
+        color: #0f766e;
+        font-weight: 800;
+      }
+      .status-box.error {
+        border-color: #fecdd3;
+        background: #fff1f2;
+        color: #be123c;
+      }
+      .required-mark {
+        color: #be123c;
+        font-weight: 900;
+      }
+      .file-preview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .file-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 30px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .muted { color: #667085; }
+      body.dark .muted, body.dark .lead, body.dark .metric > span { color: #cbd5e1; }
+      .hidden { display: none; }
+      .metrics { display: grid; grid-template-columns: repeat(7, minmax(155px, 1fr)); gap: 14px; margin: 18px 0 8px; }
+      .metric {
+        background: linear-gradient(180deg, #fff, #f8fafc);
+        border: 1px solid #dfe6f1;
+        border-radius: 8px;
+        padding: 14px 16px;
+        text-align: left;
+        min-height: 96px;
+        box-shadow: 0 8px 18px rgba(23, 32, 51, 0.04);
+        display: grid;
+        grid-template-columns: 34px 1fr;
+        grid-template-areas:
+          "icon value"
+          "icon label"
+          "button button";
+        column-gap: 10px;
+        align-items: center;
+      }
+      .metric:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 28px rgba(23, 32, 51, 0.09);
+      }
+      .metric-icon {
+        grid-area: icon;
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #0f766e;
+      }
+      .metric-icon svg { width: 28px; height: 28px; stroke-width: 2.2; }
+      .metric strong { display: block; font-size: 28px; line-height: 1.05; }
+      .metric > strong { grid-area: value; }
+      .metric > span { grid-area: label; display: block; margin-top: 6px; color: #526074; }
+      .metric .detail-toggle { grid-area: button; width: max-content; justify-self: center; margin-top: 8px; min-height: 34px; }
+      .metric.solved { background: #f0fdf4; border-color: #bbf7d0; }
+      .metric.solved .metric-icon { color: #15803d; }
+      .metric.solved strong { color: #15803d; }
+      .metric.unresolved { background: #fff1f2; border-color: #fecdd3; }
+      .metric.unresolved .metric-icon { color: #be123c; }
+      .metric.unresolved strong { color: #be123c; }
+      .metric.progress { background: #fff7ed; border-color: #fed7aa; }
+      .metric.progress .metric-icon { color: #c2410c; }
+      .metric.progress strong { color: #c2410c; }
+      .metric.response { background: #eff6ff; border-color: #bfdbfe; }
+      .metric.response .metric-icon { color: #1d4ed8; }
+      .metric.response strong { color: #1d4ed8; }
+      .metric.sla { background: #f5f3ff; border-color: #ddd6fe; }
+      .metric.sla .metric-icon { color: #6d28d9; }
+      .metric.sla strong { color: #6d28d9; }
+      .toolbar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+      .dashboard-title {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+      }
+      .dashboard-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+      .dashboard-actions button { min-height: 36px; padding: 0 14px; font-weight: 700; }
+      .refresh-button { color: #0f766e; background: #ccfbf1; border-color: #99f6e4; }
+      .logout-button { color: #b42318; background: #fff1f2; border-color: #fecdd3; }
+      .theme-button, .export-button { color: #6d28d9; background: #f5f3ff; border-color: #ddd6fe; }
+      .clear-filter-button { color: #334155; background: #f8fafc; border-color: #cbd5e1; }
+      .theme-button {
+        width: 40px;
+        padding: 0;
+      }
+      .theme-button svg { width: 19px; height: 19px; stroke-width: 2.2; }
+      .insight {
+        margin: 14px 0 4px;
+        padding: 12px 14px;
+        border: 1px solid #ccfbf1;
+        border-radius: 8px;
+        background: #f0fdfa;
+        color: #134e4a;
+        font-weight: 700;
+      }
+      body.dark .insight {
+        background: #134e4a;
+        color: #ccfbf1;
+        border-color: #0f766e;
+      }
+      .table-tools {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+      .table-tools input { flex: 1; min-width: 240px; }
+      .row-count {
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .loading {
+        opacity: 0.58;
+        pointer-events: none;
+      }
+      .loading-text {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: 8px;
+        color: #0f766e;
+        font-weight: 800;
+      }
+      .spinner {
+        width: 14px;
+        height: 14px;
+        border-radius: 999px;
+        border: 2px solid #99f6e4;
+        border-top-color: #0f766e;
+        animation: spin 800ms linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; margin: 14px 0; }
+      .dashboard-grid.three { grid-template-columns: repeat(3, 1fr); }
+      .chart-card { min-height: 235px; }
+      .chart-card:hover {
+        transform: translateY(-2px);
+        border-color: #ccfbf1;
+        box-shadow: 0 14px 28px rgba(23, 32, 51, 0.07);
+      }
+      .chart-note { color: #94a3b8; font-size: 12px; margin-top: 10px; font-style: italic; }
+      .bar-list { display: grid; gap: 10px; }
+      .bar-row { display: grid; grid-template-columns: 112px 1fr 36px; gap: 8px; align-items: center; font-size: 13px; }
+      .bar-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .bar-track { height: 11px; background: #edf1f7; border-radius: 999px; overflow: hidden; }
+      .bar-fill { height: 100%; background: #2457d6; border-radius: 999px; }
+      .bar-row:hover .bar-fill { filter: brightness(1.12); }
+      .bar-fill.high { background: #dc2626; }
+      .bar-fill.medium { background: #f59e0b; }
+      .bar-fill.low { background: #22c55e; }
+      .line-chart {
+        height: 190px;
+        display: flex;
+        align-items: end;
+        gap: 4px;
+        padding: 8px 0 34px;
+        border-bottom: 1px solid #edf1f7;
+      }
+      .line-item {
+        flex: 1;
+        min-width: 12px;
+        height: 100%;
+        display: flex;
+        align-items: end;
+        justify-content: center;
+        position: relative;
+      }
+      .line-bar { width: 100%; max-width: 18px; background: #2457d6; border-radius: 4px 4px 0 0; }
+      .line-item:hover .line-bar {
+        filter: brightness(1.12);
+        box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+      }
+      .line-bar.busy-day { background: #f97316; }
+      .line-label {
+        position: absolute;
+        left: 50%;
+        bottom: -30px;
+        transform: translateX(-50%) rotate(-38deg);
+        transform-origin: top left;
+        color: #64748b;
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .detail-toggle, .section-toggle {
+        color: #0f766e;
+        font-weight: 700;
+        background: #ccfbf1;
+        border-color: #99f6e4;
+      }
+      .section-header { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 12px; }
+      .section-header h3 { margin: 0; }
+      .section-toggle { padding: 0 16px; min-height: 36px; }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      th, td { padding: 10px; border-bottom: 1px solid #edf1f7; text-align: left; vertical-align: top; }
+      td.col-popis { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+      td.col-popis:hover { white-space: normal; max-width: 220px; }
+      td.col-nahlasil { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      td.col-solution { max-width: 160px; }
+      .remind-btn { min-height: 28px; padding: 0 10px; font-size: 12px; font-weight: 700; background: #fff7ed; border-color: #fed7aa; color: #c2410c; white-space: nowrap; }
+      .remind-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      .remind-btn.sent { background: #f0fdf4; border-color: #bbf7d0; color: #15803d; }
+      .overdue-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; background: #fee2e2; color: #991b1b; white-space: nowrap; }
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .status-badge.solved { background: #dcfce7; color: #166534; }
+      .status-badge.unresolved { background: #ffe4e6; color: #9f1239; }
+      .status-badge.progress { background: #ffedd5; color: #9a3412; }
+      .priority-badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+      .priority-badge.high { background: #fee2e2; color: #991b1b; }
+      .priority-badge.medium { background: #fef3c7; color: #92400e; }
+      .priority-badge.low { background: #dcfce7; color: #166534; }
+      .active-filter {
+        color: #0f766e;
+        font-size: 12px;
+        font-weight: 900;
+      }
+      .success-screen {
+        display: grid;
+        justify-items: center;
+        gap: 14px;
+        padding: 48px 24px;
+        text-align: center;
+      }
+      .success-icon {
+        width: 72px;
+        height: 72px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 22px;
+        background: #dcfce7;
+        color: #15803d;
+        border: 1px solid #86efac;
+        box-shadow: 0 18px 36px rgba(21, 128, 61, 0.18);
+      }
+      .success-icon svg { width: 42px; height: 42px; stroke-width: 2.4; }
+      .success-screen h2 { font-size: 30px; margin: 0; }
+      .success-screen p { max-width: 520px; margin: 0; color: #64748b; }
+      .empty-state {
+        padding: 22px;
+        text-align: center;
+        color: #64748b;
+        font-weight: 700;
+      }
+      .table-scroll {
+        height: 320px;
+        overflow: auto;
+        border: 1px solid #edf1f7;
+        border-radius: 8px;
+      }
+      .table-scroll.resizable {
+        min-height: 180px;
+        resize: vertical;
+      }
+      .table-scroll thead th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: #f8fafc;
+      }
+      body.dark .table-scroll thead th { background: #111827; }
+      body.dark th, body.dark td { border-bottom-color: #334155; }
+      body.dark tr.row-solved { background: rgba(22, 101, 52, 0.22); }
+      body.dark tr.row-unresolved { background: rgba(159, 18, 57, 0.2); }
+      body.dark tr.row-progress { background: rgba(154, 52, 18, 0.22); }
+      tr.row-solved { background: #f0fdf4; }
+      tr.row-unresolved { background: #fff1f2; }
+      tr.row-progress { background: #fff7ed; }
+      tr.row-solved td { border-bottom-color: #dcfce7; }
+      tr.row-unresolved td { border-bottom-color: #ffe4e6; }
+      tr.row-progress td { border-bottom-color: #ffedd5; }
+      tr.row-system-stop { background: #fefce8 !important; border-left: 3px solid #f59e0b; }
+      tr.row-system-stop td { border-bottom-color: #fde68a; }
+      body.dark tr.row-system-stop { background: rgba(202, 138, 4, 0.2) !important; }
+      @media (max-width: 760px) {
+        .grid, .toolbar, .metrics, nav, .dashboard-grid, .dashboard-grid.three { grid-template-columns: 1fr; }
+        .top-actions { justify-content: center; }
+        .dashboard-title { align-items: stretch; flex-direction: column; }
+        .dashboard-actions button { flex: 1; }
+        .panel { padding: 20px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <nav style="grid-template-columns:1fr 1fr 1fr;max-width:780px">
+        <button id="formTab" class="active"><span class="tab-icon" data-icon="file"></span>Formular</button>
+        <button id="dashboardTab"><span class="tab-icon" data-icon="chart"></span>Power BI Dashboard</button>
+        <button id="managerTab"><span class="tab-icon" data-icon="target"></span>Pro vedoucího</button>
+      </nav>
+      <div class="top-actions">
+        <button id="themeToggle" class="theme-button" type="button" title="Přepnout režim" aria-label="Přepnout režim"><span data-icon="moon"></span></button>
+      </div>
+
+      <section id="formView" class="panel">
+        <div class="title-icon" data-icon="tools"></div>
+        <h1>Technical Fault Report</h1>
+        <p class="lead">Please fill in the technical details of the issue. The information will be immediately sent for resolution.</p>
+        <form id="ticketForm">
+          <label><span class="field-title"><span class="field-icon" data-icon="user"></span>Reported by <span class="required-mark">*</span></span><input name="reported_by" required /></label>
+          <div class="grid">
+            <label><span class="field-title"><span class="field-icon" data-icon="building"></span>1. Department <span class="required-mark">*</span></span><select name="department" required></select></label>
+            <label><span class="field-title"><span class="field-icon" data-icon="cpu"></span>2. Technology <span class="required-mark">*</span></span><select name="technology" required></select></label>
+          </div>
+          <div id="customFields" class="grid hidden">
+            <label id="customDepartmentLabel" class="hidden"><span class="field-title"><span class="field-icon" data-icon="edit"></span>Enter department / Zadejte oddělení</span><input name="department_custom" /></label>
+            <label id="customTechnologyLabel" class="hidden"><span class="field-title"><span class="field-icon" data-icon="edit"></span>Enter technology / Zadejte technologii</span><input name="technology_custom" /></label>
+          </div>
+          <div class="grid">
+            <label><span class="field-title"><span class="field-icon" data-icon="map"></span>3. Location <span class="required-mark">*</span></span><input name="location" required /></label>
+            <label><span class="field-title"><span class="field-icon" data-icon="flag"></span>4. Priority</span><select name="priority"></select></label>
+          </div>
+          <label><span class="field-title"><span class="field-icon" data-icon="message"></span>Detailed fault description <span class="required-mark">*</span></span><textarea name="description" rows="7" required></textarea></label>
+          <label><span class="field-title"><span class="field-icon" data-icon="note"></span>Additional note</span><textarea name="note" rows="3"></textarea></label>
+          <label><span class="field-title"><span class="field-icon" data-icon="paperclip"></span>Attachments</span><input name="attachments" type="file" multiple accept=".jpg,.jpeg,.png,.pdf" /></label>
+          <div id="filePreview" class="file-preview"></div>
+          <button id="submitTicket" class="primary" type="submit"><span class="tab-icon" data-icon="send"></span>SUBMIT REPORT</button>
+        </form>
+        <p id="formStatus" class="status hidden"></p>
+        <section id="ticketSuccess" class="success-screen hidden">
+          <div class="success-icon" data-icon="check"></div>
+          <h2>Ticket byl odeslán</h2>
+          <p>Závada byla předána do navazného workflow. Můžete zadat další ticket, pokud potřebujete nahlásit ještě něco dalšího.</p>
+          <button id="newTicket" class="primary" type="button"><span class="tab-icon" data-icon="file"></span>Odeslat nový ticket</button>
+        </section>
+      </section>
+
+      <section id="managerView" class="hidden">
+        <section id="managerLoginPanel" class="panel" style="width:min(980px,100%);margin:0 auto">
+          <h2>Přístup — přehled pro vedoucího</h2>
+          <p class="muted">Zadejte heslo pro přístup.</p>
+          <form id="managerLoginForm">
+            <label>Heslo<input name="password" type="password" /></label>
+            <button class="primary" type="submit">Přihlásit se</button>
+          </form>
+          <p id="managerLoginStatus" class="status"></p>
+        </section>
+        <section id="managerPanel" class="hidden">
+          <div class="panel">
+            <div class="dashboard-title">
+              <h1>Přehled pro vedoucího — CZLC4</h1>
+              <div class="dashboard-actions">
+                <button id="refreshManager" class="refresh-button" type="button">Obnovit</button>
+                <button id="logoutManager" class="logout-button" type="button">Odhlásit se</button>
+              </div>
+            </div>
+            <p id="managerUpdated" class="muted"></p>
+            <div class="toolbar">
+              <select id="mgrDays"><option value="7">7 dní</option><option value="30" selected>30 dní</option></select>
+            </div>
+          </div>
+
+          <section class="card" id="comparisonSection">
+            <h3>📈 Srovnání s předchozím obdobím</h3>
+            <div id="comparisonCards" class="metrics" style="grid-template-columns:repeat(5,minmax(140px,1fr))"></div>
+          </section>
+
+          <section class="card">
+            <h3>🔁 Opakující se problémy (3+ závad)</h3>
+            <p class="muted" style="font-size:13px">Místa a technologie s nejvíce opakujícími se poruchami ve zvoleném období.</p>
+            <div id="recurringList"></div>
+          </section>
+
+          <section class="card" id="priorityStatsSection">
+            <h3>⚡ Průměrná doba reakce dle priority</h3>
+            <div id="priorityStatsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px"></div>
+          </section>
+
+          <section class="card" id="hourlySection">
+            <h3>🕐 Závady dle hodiny dne</h3>
+            <p style="margin:0 0 8px;font-size:13px;color:#667085">Kdy během dne vzniká nejvíce závad. 🟢 = denní směna &nbsp;🟣 = noční / večerní (18–06 h)</p>
+            <div id="hourlyChart" style="display:flex;align-items:flex-end;gap:3px;height:110px;padding:0 4px"></div>
+          </section>
+
+          <section class="card hidden" id="techSection">
+            <h3>👤 Přehled podle technika — kdo nahlašuje (top 10)</h3>
+            <p style="margin:0 0 8px;font-size:13px;color:#667085">Kdo nejčastěji hlásí závady a jak rychle jsou jeho závady průměrně opraveny.</p>
+            <div class="table-tools"><span id="techCount" class="row-count"></span></div>
+            <div class="table-scroll resizable"><table id="techTable"></table></div>
+          </section>
+
+          <section class="card hidden" id="reopenedSection">
+            <h3>🔁 Opakovaná závada na stejném místě (do 24 h)</h3>
+            <p style="margin:0 0 8px;font-size:13px;color:#667085">Závady nahlášené na místě, kde byla předchozí závada vyřešena méně než 24 hodin předtím — možná neúplná oprava.</p>
+            <div class="table-tools"><span id="reopenedCount" class="row-count"></span></div>
+            <div class="table-scroll resizable"><table id="reopenedTable"></table></div>
+          </section>
+
+          <section class="card hidden" id="noSolutionSection">
+            <h3>📋 Závady bez popisu řešení</h3>
+            <p style="margin:0 0 8px;font-size:13px;color:#667085">Závady označené jako Vyřešeno, ale technik nevyplnil popis řešení — důležité pro audit a znalostní bázi.</p>
+            <div class="table-tools"><span id="noSolutionCount" class="row-count"></span></div>
+            <div class="table-scroll resizable"><table id="noSolutionTable"></table></div>
+          </section>
+
+          <section class="card">
+            <h3>⏱️ SLA přesčasy — závady opravené po 60 min</h3>
+            <p style="margin:0 0 8px;font-size:13px;color:#667085">Pouze závady se stavem <strong>Vyřešeno</strong> — závady V řešení (čeká na servis/díl) nejsou zahrnuty.</p>
+            <div class="table-tools"><span id="slaBreachCount" class="row-count"></span></div>
+            <div class="table-scroll resizable"><table id="slaBreachTable"></table></div>
+          </section>
+        </section>
+      </section>
+      <section id="dashboardView" class="hidden">
+        <section id="dashboardPanel">
+          <div class="panel">
+            <div class="dashboard-title">
+              <h1>Power BI Dashboard - CZLC4</h1>
+              <div class="dashboard-actions">
+                <button id="refreshDashboard" class="refresh-button" type="button">Obnovit <span id="refreshCountdown" class="muted" style="font-size:11px;font-weight:400"></span></button>
+              </div>
+            </div>
+            <p id="updated" class="muted"></p>
+            <p id="insight" class="insight"></p>
+            <div class="toolbar">
+              <select id="days"><option value="7">7 dní</option><option value="30" selected>30 dní</option><option value="all">Vše</option></select>
+              <select id="technology"><option value="Vse">Vše technologie</option></select>
+              <select id="priority"><option value="Vse">Vše priority</option><option>High</option><option>Medium</option><option>Low</option></select>
+            </div>
+            <div id="metrics" class="metrics"></div>
+          </div>
+          <section id="inProgressPanel" class="card hidden">
+            <h3>Závady V řešení – čeká na servis / díl</h3>
+            <div class="table-scroll"><table id="inProgressRows"></table></div>
+          </section>
+          <div class="dashboard-grid">
+            <section class="card chart-card">
+              <h3>Závady za den</h3>
+              <div id="dailyChart" class="line-chart"></div>
+              <p class="chart-note">Denní počet nahlášených závad - ukazuje vytížené dny a trend v čase.</p>
+            </section>
+            <section class="card chart-card">
+              <h3>Top technologie</h3>
+              <div id="technologyChart" class="bar-list"></div>
+              <p class="chart-note">Které technologie selhávají nejčastěji.</p>
+            </section>
+            <section class="card chart-card">
+              <h3>Závady dle dne v týdnu</h3>
+              <div id="weekdayChart" class="bar-list"></div>
+              <p class="chart-note">Který den je nejvytíženější.</p>
+            </section>
+          </div>
+          <div class="dashboard-grid three">
+            <section class="card chart-card">
+              <h3>Podle priority</h3>
+              <div id="priorityChart" class="bar-list"></div>
+              <p class="chart-note">Rozložení závad dle naléhavosti.</p>
+            </section>
+            <section class="card chart-card">
+              <h3>Podle oddělení</h3>
+              <div id="departmentChart" class="bar-list"></div>
+              <p class="chart-note">Kde je největší technická zátěž.</p>
+            </section>
+            <section class="card chart-card">
+              <h3>Nejproblematičtější místa</h3>
+              <div id="locationChart" class="bar-list"></div>
+              <p class="chart-note">Lokace s opakujícími se poruchami.</p>
+            </section>
+          </div>
+          <section id="overduePanel" class="card hidden">
+            <div class="section-header">
+              <h3>🔴 Závady otevřené déle než 24 hodin</h3>
+              <button id="toggleOverdue" class="section-toggle">skryt</button>
+            </div>
+            <div class="table-tools">
+              <span id="overdueCount" class="row-count"></span>
+              <span class="muted" style="font-size:12px">Kliknutím na Připomenout odešleš zprávu do Teams kanálu Hlášení závad LC4</span>
+            </div>
+            <div class="table-scroll resizable"><table id="overdueRows"></table></div>
+          </section>
+          <section id="autoStopPanel" class="card hidden">
+            <div class="section-header">
+              <h3>⚡ AutoStore výpadky (System Stop)</h3>
+              <button id="toggleAutoStop" class="section-toggle">skryt</button>
+            </div>
+            <div class="table-tools">
+              <span id="autoStopCount" class="row-count"></span>
+            </div>
+            <div class="table-scroll resizable"><table id="autoStopRows"></table></div>
+          </section>
+          <section class="card">
+            <div class="section-header">
+              <h3>Nevyřešené závady a závady V řešení</h3>
+              <button id="toggleUnresolved" class="section-toggle">skryt</button>
+            </div>
+            <div class="table-tools">
+              <input id="unresolvedSearch" placeholder="Hledat v nevyřešených závadách..." />
+              <span id="unresolvedCount" class="row-count"></span>
+            </div>
+            <div id="unresolvedContent" class="table-scroll resizable"><table id="rows"></table></div>
+          </section>
+          <section class="card">
+            <div class="section-header">
+              <h3>Všechna data</h3>
+              <button id="toggleAllRows" class="section-toggle">skryt</button>
+            </div>
+            <div class="table-tools">
+              <input id="allRowsSearch" placeholder="Hledat ve všech datech..." />
+              <button id="clearMetricFilter" class="clear-filter-button" type="button">Zrušit filtr</button>
+              <button id="exportCsv" class="export-button" type="button">Stáhnout CSV</button>
+              <span id="allRowsCount" class="row-count"></span>
+              <span id="activeFilterLabel" class="active-filter"></span>
+            </div>
+            <div id="allRowsContent" class="table-scroll resizable"><table id="allRows"></table></div>
+          </section>
+        </section>
+      </section>
+    </main>
+    <script>
+      const formTab = document.getElementById("formTab");
+      const dashboardTab = document.getElementById("dashboardTab");
+      const managerTab = document.getElementById("managerTab");
+      const formView = document.getElementById("formView");
+      const dashboardView = document.getElementById("dashboardView");
+      const managerView = document.getElementById("managerView");
+      const formStatus = document.getElementById("formStatus");
+      const ticketForm = document.getElementById("ticketForm");
+      const ticketSuccess = document.getElementById("ticketSuccess");
+      let dashboardRows = [];
+      let unresolvedRows = [];
+      let activeTableFilter = "";
+      const maxAttachmentSize = 10 * 1024 * 1024;
+      const allowedAttachmentTypes = ["image/jpeg", "image/png", "application/pdf"];
+
+      function setTheme(enabled) {
+        document.body.classList.toggle("dark", enabled);
+        document.getElementById("themeToggle").innerHTML = uiIcon(enabled ? "sun" : "moon");
+        localStorage.setItem("reportTheme", enabled ? "dark" : "light");
+      }
+
+      function show(view) {
+        formView.classList.toggle("hidden", view !== "form");
+        dashboardView.classList.toggle("hidden", view !== "dashboard");
+        managerView.classList.toggle("hidden", view !== "manager");
+        formTab.classList.toggle("active", view === "form");
+        dashboardTab.classList.toggle("active", view === "dashboard");
+        managerTab.classList.toggle("active", view === "manager");
+      }
+      formTab.onclick = () => show("form");
+      dashboardTab.onclick = () => {
+        show("dashboard");
+        if (!dashboardLoaded) { dashboardLoaded = true; loadDashboard(); startAutoRefresh(); }
+      };
+      managerTab.onclick = () => show("manager");
+
+      async function loadOptions() {
+        const response = await fetch("/api/options");
+        const options = await response.json();
+        fillSelect("department", options.departments);
+        fillSelect("technology", options.technologies);
+        fillSelect("priority", options.priorities, "Medium");
+      }
+
+      function fillSelect(name, values, selected = "") {
+        const select = document.querySelector(`[name="${name}"]`);
+        select.innerHTML = name === "priority" ? "" : "<option></option>";
+        values.forEach((value) => {
+          const option = document.createElement("option");
+          option.textContent = value;
+          option.value = value;
+          if (value === selected) option.selected = true;
+          select.appendChild(option);
+        });
+      }
+
+      function updateCustomFields() {
+        const departmentOther = document.querySelector('[name="department"]').value === "Jine / Other";
+        const technologyOther = document.querySelector('[name="technology"]').value === "Jine / Other";
+        document.getElementById("customFields").classList.toggle("hidden", !departmentOther && !technologyOther);
+        document.getElementById("customDepartmentLabel").classList.toggle("hidden", !departmentOther);
+        document.getElementById("customTechnologyLabel").classList.toggle("hidden", !technologyOther);
+        document.querySelector('[name="department_custom"]').required = departmentOther;
+        document.querySelector('[name="technology_custom"]').required = technologyOther;
+      }
+
+      function setFormStatus(message, isError) {
+        formStatus.textContent = message;
+        formStatus.className = `status-box${isError ? " error" : ""}`;
+      }
+
+      function updateFilePreview() {
+        const preview = document.getElementById("filePreview");
+        const input = document.querySelector('[name="attachments"]');
+        const files = [...input.files];
+        const invalid = files.find((file) => !allowedAttachmentTypes.includes(file.type) || file.size > maxAttachmentSize);
+        if (invalid) {
+          input.value = "";
+          preview.innerHTML = "";
+          setFormStatus(`Soubor ${invalid.name} nejde prilozit. Povolen je JPG, PNG nebo PDF do 10 MB.`, true);
+          return;
+        }
+        preview.innerHTML = files.map((file) => `<span class="file-chip">${file.name} (${formatFileSize(file.size)})</span>`).join("");
+      }
+
+      function formatFileSize(size) {
+        if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} kB`;
+        return `${(size / 1024 / 1024).toFixed(1)} MB`;
+      }
+
+      async function fileToBase64(file) {
+        const buffer = await file.arrayBuffer();
+        let binary = "";
+        new Uint8Array(buffer).forEach((byte) => binary += String.fromCharCode(byte));
+        return btoa(binary);
+      }
+
+      ticketForm.onsubmit = async (event) => {
+        event.preventDefault();
+        const form = new FormData(event.target);
+        const submitButton = document.getElementById("submitTicket");
+        setFormStatus("Odesílám ticket...", false);
+        submitButton.disabled = true;
+        const attachments = await Promise.all([...event.target.attachments.files].map(async (file) => ({
+          name: file.name,
+          data: await fileToBase64(file)
+        })));
+        const payload = Object.fromEntries(form.entries());
+        if (payload.department === "Jine / Other") payload.department = payload.department_custom;
+        if (payload.technology === "Jine / Other") payload.technology = payload.technology_custom;
+        delete payload.department_custom;
+        delete payload.technology_custom;
+        payload.attachments = attachments;
+        const response = await fetch("/api/tickets", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        submitButton.disabled = false;
+        if (response.ok) {
+          event.target.reset();
+          document.getElementById("filePreview").innerHTML = "";
+          formStatus.classList.add("hidden");
+          ticketForm.classList.add("hidden");
+          ticketSuccess.classList.remove("hidden");
+        } else {
+          setFormStatus("Nepodařilo se odeslat. Zkontrolujte VPN.", true);
+        }
+      };
+
+      let dashboardLoaded = false;
+
+      document.getElementById("refreshDashboard").onclick = () => {
+        loadDashboard();
+      };
+
+      document.getElementById("themeToggle").onclick = () => setTheme(!document.body.classList.contains("dark"));
+
+      async function loadDashboard() {
+        const panel = document.getElementById("dashboardPanel");
+        const updated = document.getElementById("updated");
+        panel.classList.add("loading");
+        updated.innerHTML = '<span class="loading-text"><span class="spinner"></span>Načítám data...</span>';
+        const query = new URLSearchParams({
+          days: document.getElementById("days").value,
+          technology: document.getElementById("technology").value,
+          priority: document.getElementById("priority").value
+        });
+        let data;
+        try {
+          const response = await fetch(`/api/dashboard?${query}`);
+          data = await response.json();
+          if (!response.ok) throw new Error(data.detail || "Data se nepodařilo načíst.");
+        } catch (error) {
+          updated.textContent = error.message;
+          panel.classList.remove("loading");
+          return;
+        }
+        updated.textContent = `Aktualizováno ${data.updated_at}`;
+        document.title = `(${data.metrics.unresolved} nevyřešeno) Maintenance Helpdesk CZLC4`;
+        dashboardRows = data.rows;
+        unresolvedRows = data.unresolved_rows;
+        document.getElementById("insight").textContent = buildInsight(data);
+        const tech = document.getElementById("technology");
+        if (tech.options.length === 1) {
+          data.filters.technologies.forEach((item) => {
+            const option = document.createElement("option");
+            option.textContent = item;
+            option.value = item;
+            tech.appendChild(option);
+          });
+        }
+        document.getElementById("metrics").innerHTML = [
+          ["total", "Celkem závad", data.metrics.total, "clipboard", "all"],
+          ["solved", `Vyřešeno (${data.metrics.solved_percent} %)`, data.metrics.solved, "check", "solved"],
+          ["unresolved", "Nevyřešeno", data.metrics.unresolved, "alert", "unresolved"],
+          ["progress", "V řešení", data.metrics.in_progress, "wrench", "progress"],
+          ["response", "Prům. reakce", data.metrics.avg_response === null ? "-" : `${data.metrics.avg_response} min`, "zap"],
+          ["response", "Prům. oprava", data.metrics.avg_repair === null ? "-" : `${data.metrics.avg_repair} min`, "clock"],
+          ["sla", "SLA <60 min (vyřešeno)", `${data.metrics.sla} %`, "target"]
+        ].map(([cls, label, value, icon, filter]) => `<div class="metric ${cls}" ${filter ? `data-filter="${filter}"` : ""}><div class="metric-icon">${metricIcon(icon)}</div><strong>${value}</strong><span>${label}</span></div>`).join("");
+        document.querySelectorAll(".metric[data-filter]").forEach((metric) => {
+          metric.onclick = () => {
+            activeTableFilter = metric.dataset.filter;
+            applyTableFilters();
+            if (activeTableFilter === "progress") {
+              document.getElementById("inProgressPanel").classList.remove("hidden");
+              return;
+            }
+            if (activeTableFilter === "unresolved") {
+              document.getElementById("unresolvedContent").classList.remove("hidden");
+              document.getElementById("toggleUnresolved").textContent = "skryt";
+            }
+          };
+        });
+        document.querySelectorAll(".metric")[3].innerHTML += '<button class="detail-toggle" id="toggleInProgress">detail</button>';
+        document.getElementById("toggleInProgress").onclick = (event) => {
+          event.stopPropagation();
+          document.getElementById("inProgressPanel").classList.toggle("hidden");
+        };
+        renderLineChart("dailyChart", data.charts.daily);
+        renderBarList("technologyChart", data.charts.technology);
+        renderBarList("weekdayChart", data.charts.weekday.map((item) => ({ ...item, name: weekdayName(item.name) })));
+        renderBarList("priorityChart", data.charts.priority, true);
+        renderBarList("departmentChart", data.charts.department);
+        renderBarList("locationChart", data.charts.location);
+        renderTable("inProgressRows", data.in_progress_rows);
+        applyTableFilters();
+        panel.classList.remove("loading");
+      }
+
+      function buildInsight(data) {
+        const topTechnology = data.charts.technology[0];
+        const topDay = data.charts.daily.reduce((best, item) => item.count > best.count ? item : best, { name: "", count: 0 });
+        if (!topTechnology || !topDay.name) return "Zatím nejsou dostupná data pro shrnutí.";
+        return `Za vybrané období vede ${topTechnology.name} (${topTechnology.count} závad). Nejvýraznější den byl ${formatChartDate(topDay.name)} s počtem ${topDay.count} závad.`;
+      }
+
+      function weekdayName(name) {
+        return { Monday: "Po", Tuesday: "Ut", Wednesday: "St", Thursday: "Ct", Friday: "Pa", Saturday: "So", Sunday: "Ne" }[name] || name;
+      }
+
+      function metricIcon(name) {
+        const icons = {
+          clipboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 4h6l1 2h3v15H5V6h3l1-2Z"/><path d="M9 10h6M9 14h6M9 18h4"/></svg>',
+          check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>',
+          alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 9v5M12 17h.01"/></svg>',
+          wrench: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14.5 5.5a5 5 0 0 0 4 8L11 21l-4-4 7.5-7.5a5 5 0 0 0 0-4Z"/><path d="m6 18-3 3"/></svg>',
+          zap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M13 2 4 14h7l-1 8 10-13h-7l1-7Z"/></svg>',
+          clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+          target: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>'
+        };
+        return icons[name] || icons.clipboard;
+      }
+
+      function uiIcon(name) {
+        const icons = {
+          file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3h8l4 4v14H6V3Z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>',
+          chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5M12 16V8M16 16v-8"/></svg>',
+          user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+          building: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 21V5l8-3 8 3v16"/><path d="M9 21v-6h6v6"/><path d="M8 8h.01M12 8h.01M16 8h.01M8 12h.01M16 12h.01"/></svg>',
+          cpu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M9 1v4M15 1v4M9 19v4M15 19v4M1 9h4M1 15h4M19 9h4M19 15h4"/></svg>',
+          edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z"/><path d="m14 7 3 3"/></svg>',
+          map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 21s7-5.2 7-12a7 7 0 0 0-14 0c0 6.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg>',
+          flag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 22V4"/><path d="M5 4h12l-2 4 2 4H5"/></svg>',
+          message: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 5h16v11H8l-4 4V5Z"/><path d="M8 9h8M8 13h5"/></svg>',
+          note: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 3h11l3 3v15H5V3Z"/><path d="M16 3v4h4"/><path d="M8 12h8M8 16h6"/></svg>',
+          paperclip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m21 11-8.5 8.5a6 6 0 0 1-8.5-8.5l9-9a4 4 0 0 1 5.7 5.7l-9 9a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg>',
+          send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m22 2-7 20-4-9-9-4 20-7Z"/><path d="M22 2 11 13"/></svg>',
+          tools: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14.5 5.5a5 5 0 0 0 4 8L11 21l-4-4 7.5-7.5a5 5 0 0 0 0-4Z"/><path d="m6 18-3 3"/><path d="m14 14 3 3"/></svg>',
+          moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a7 7 0 1 0 10.5 10.5Z"/></svg>',
+          sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>'
+        };
+        return icons[name] || "";
+      }
+
+      document.querySelectorAll("[data-icon]").forEach((element) => {
+        element.innerHTML = uiIcon(element.dataset.icon);
+      });
+
+      function renderLineChart(id, items) {
+        const max = Math.max(1, ...items.map((item) => item.count));
+        document.getElementById(id).innerHTML = items.map((item) => {
+          const height = Math.max(8, item.count / max * 100);
+          const busyClass = item.count >= 20 ? " busy-day" : "";
+          return `<div class="line-item"><div class="line-bar${busyClass}" style="height:${height}%"></div><span class="line-label">${formatChartDate(item.name)}</span></div>`;
+        }).join("");
+      }
+
+      function formatChartDate(value) {
+        const parts = String(value).split("-");
+        if (parts.length === 3) return `${parts[2]}.${parts[1]}.`;
+        return value;
+      }
+
+      function renderBarList(id, items, priorityColors = false) {
+        const max = Math.max(1, ...items.map((item) => item.count));
+        document.getElementById(id).innerHTML = items.map((item) => {
+          const width = Math.max(6, item.count / max * 100);
+          const cls = priorityColors ? String(item.name).toLowerCase() : "";
+          return `<div class="bar-row"><span title="${item.name}">${item.name}</span><div class="bar-track"><div class="bar-fill ${cls}" style="width:${width}%"></div></div><b>${item.count}</b></div>`;
+        }).join("");
+      }
+
+      function renderTable(id, rows) {
+        if (!rows.length) {
+          document.getElementById(id).innerHTML = `<tbody><tr><td class="empty-state" colspan="10">Pro tento filtr nejsou žádné závady.</td></tr></tbody>`;
+          return;
+        }
+        document.getElementById(id).innerHTML = "<thead><tr><th>Čas</th><th>Technologie</th><th>Místo</th><th>Priorita</th><th>Popis</th><th>Nahlásil</th><th>Stav</th><th>Reakce</th><th>Vyřešeno</th><th>Popis řešení</th></tr></thead><tbody>" +
+          rows.slice(0, 100).map((row) => `<tr class="${rowClass(row)}"><td>${row.reported_at}</td><td>${row.technology}</td><td>${row.location}</td><td>${priorityBadge(row.priority)}</td><td class="col-popis" title="${String(row.description || "").replaceAll('"',"'")}">${row.description}</td><td class="col-nahlasil" title="${String(row.reported_by || "").replaceAll('"',"'")}">${row.reported_by}</td><td>${statusBadge(row)}</td><td>${row.reacted_at || ""}</td><td>${row.solved_at || ""}</td><td class="col-solution">${row.solution || ""}</td></tr>`).join("") +
+          "</tbody>";
+      }
+      function priorityBadge(priority) {
+        const text = priority || "-";
+        const cls = _normalizeForClass(text);
+        return `<span class="priority-badge ${cls}">${text}</span>`;
+      }
+      function _normalizeForClass(value) {
+        const text = String(value || "").toLowerCase();
+        if (text.includes("high")) return "high";
+        if (text.includes("medium")) return "medium";
+        if (text.includes("low")) return "low";
+        return "";
+      }
+      function statusBadge(row) {
+        const cls = rowClass(row).replace("row-", "");
+        const label = row.status || "Nevyřešeno";
+        return `<span class="status-badge ${cls}">${label}</span>`;
+      }
+      function rowClass(row) {
+        const isSystemStop = String(row.technology || "").toLowerCase().includes("vypadek as");
+        const status = String(row.status || "").toLowerCase();
+        const statusClass = (status.includes("vyreseno") || status.includes("vyřešeno")) ? "row-solved"
+          : (status.includes("reseni") || status.includes("řešení")) ? "row-progress"
+          : "row-unresolved";
+        return isSystemStop ? `${statusClass} row-system-stop` : statusClass;
+      }
+      function matchesSearch(row, query) {
+        if (!query) return true;
+        return ["reported_at", "technology", "location", "priority", "description", "reported_by", "status", "solution"]
+          .some((key) => String(row[key] || "").toLowerCase().includes(query));
+      }
+      function matchesMetricFilter(row) {
+        if (!activeTableFilter || activeTableFilter === "all") return true;
+        return rowClass(row) === `row-${activeTableFilter}`;
+      }
+      function renderOverdueTable(rows) {
+        const el = document.getElementById("overdueRows");
+        if (!rows.length) {
+          el.innerHTML = `<tbody><tr><td class="empty-state" colspan="8">Žádné závady otevřené déle než 24 hodin.</td></tr></tbody>`;
+          return;
+        }
+        el.innerHTML = "<thead><tr><th>Čas</th><th>Otevřeno</th><th>Technologie</th><th>Místo</th><th>Priorita</th><th>Stav</th><th>Popis</th><th>Připomenout</th></tr></thead><tbody>" +
+          rows.map((row, idx) => `<tr class="${rowClass(row)}"><td>${row.reported_at}</td><td><span class="overdue-badge">${row.hours_open}h</span></td><td>${row.technology}</td><td>${row.location}</td><td>${priorityBadge(row.priority)}</td><td><span style="font-size:11px;color:#6b7280">${row.status || '—'}</span></td><td class="col-popis" title="${String(row.description || "").replaceAll('"', "'")}">${row.description}</td><td><button class="remind-btn" id="remind-${idx}" onclick="sendReminder(${idx})">🔔 Připomenout</button></td></tr>`).join("") +
+          "</tbody>";
+        el._rows = rows;
+      }
+
+      async function sendReminder(idx) {
+        const table = document.getElementById("overdueRows");
+        const row = table._rows[idx];
+        const btn = document.getElementById(`remind-${idx}`);
+        btn.disabled = true;
+        btn.textContent = "Odesílám...";
+        try {
+          const response = await fetch("/api/dashboard/remind", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(row)
+          });
+          if (response.ok) {
+            btn.textContent = "✓ Odesláno";
+            btn.classList.add("sent");
+          } else {
+            btn.textContent = "✗ Chyba";
+            btn.disabled = false;
+          }
+        } catch {
+          btn.textContent = "✗ Chyba";
+          btn.disabled = false;
+        }
+      }
+
+      function applyTableFilters() {
+        const unresolvedQuery = document.getElementById("unresolvedSearch").value.trim().toLowerCase();
+        const allQuery = document.getElementById("allRowsSearch").value.trim().toLowerCase();
+        const visibleUnresolved = unresolvedRows.filter((row) => matchesSearch(row, unresolvedQuery));
+        const visibleRows = dashboardRows.filter((row) => matchesMetricFilter(row) && matchesSearch(row, allQuery));
+        const overdueRows = dashboardRows.filter((row) => row.hours_open !== null && row.hours_open !== undefined && row.hours_open >= 24);
+        renderOverdueTable(overdueRows);
+        document.getElementById("overdueCount").textContent = `${overdueRows.length} záznamů`;
+        document.getElementById("overduePanel").classList.toggle("hidden", overdueRows.length === 0);
+        const autoStopRows = dashboardRows.filter((row) => {
+          const t = (row.technology || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+          return t === "vypadek as" || t.includes("vypadek as") || t.includes("autostore vypadek");
+        });
+        renderTable("rows", visibleUnresolved);
+        renderTable("allRows", visibleRows);
+        renderTable("autoStopRows", autoStopRows);
+        document.getElementById("unresolvedCount").textContent = `${visibleUnresolved.length} záznamů`;
+        document.getElementById("allRowsCount").textContent = `${visibleRows.length} záznamů`;
+        document.getElementById("autoStopCount").textContent = `${autoStopRows.length} záznamů`;
+        document.getElementById("autoStopPanel").classList.toggle("hidden", autoStopRows.length === 0);
+        document.getElementById("clearMetricFilter").classList.toggle("hidden", !activeTableFilter || activeTableFilter === "all");
+        document.getElementById("activeFilterLabel").textContent = activeFilterText();
+      }
+      function activeFilterText() {
+        const labels = { solved: "Aktivní filtr: Vyřešeno", unresolved: "Aktivní filtr: Nevyřešeno", progress: "Aktivní filtr: V řešení" };
+        return labels[activeTableFilter] || "";
+      }
+      function exportCurrentCsv() {
+        const query = document.getElementById("allRowsSearch").value.trim().toLowerCase();
+        const rows = dashboardRows.filter((row) => matchesMetricFilter(row) && matchesSearch(row, query));
+        const headers = ["Čas", "Technologie", "Místo", "Priorita", "Popis", "Nahlásil", "Stav", "Reakce", "Vyřešeno", "Popis řešení"];
+        const keys = ["reported_at", "technology", "location", "priority", "description", "reported_by", "status", "reacted_at", "solved_at", "solution"];
+        const csv = [headers, ...rows.map((row) => keys.map((key) => row[key] || ""))]
+          .map((line) => line.map((value) => `"${String(value).replaceAll('"', '""')}"`).join(","))
+          .join("\n");
+        const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "report-závad.csv";
+        link.click();
+        URL.revokeObjectURL(link.href);
+      }
+      function bindSectionToggle(buttonId, contentId) {
+        document.getElementById(buttonId).onclick = () => {
+          const content = document.getElementById(contentId);
+          const hidden = content.classList.toggle("hidden");
+          document.getElementById(buttonId).textContent = hidden ? "zobrazit" : "skryt";
+        };
+      }
+      bindSectionToggle("toggleUnresolved", "unresolvedContent");
+      bindSectionToggle("toggleAllRows", "allRowsContent");
+      bindSectionToggle("toggleAutoStop", "autoStopPanel");
+      bindSectionToggle("toggleOverdue", "overduePanel");
+
+      let autoRefreshTimer = null;
+      let autoRefreshCountdown = 300;
+      function startAutoRefresh() {
+        if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+        autoRefreshCountdown = 300;
+        autoRefreshTimer = setInterval(() => {
+          autoRefreshCountdown--;
+          const el = document.getElementById("refreshCountdown");
+          if (el) el.textContent = `(${autoRefreshCountdown}s)`;
+          if (autoRefreshCountdown <= 0) {
+            loadDashboard();
+            autoRefreshCountdown = 300;
+          }
+        }, 1000);
+      }
+      document.getElementById("unresolvedSearch").oninput = applyTableFilters;
+      document.getElementById("allRowsSearch").oninput = applyTableFilters;
+      document.querySelector('[name="attachments"]').onchange = updateFilePreview;
+      document.getElementById("clearMetricFilter").onclick = () => {
+        activeTableFilter = "";
+        applyTableFilters();
+      };
+      document.getElementById("newTicket").onclick = () => {
+        ticketSuccess.classList.add("hidden");
+        ticketForm.classList.remove("hidden");
+        updateCustomFields();
+      };
+      document.getElementById("exportCsv").onclick = exportCurrentCsv;
+      document.getElementById("days").onchange = loadDashboard;
+      document.getElementById("technology").onchange = loadDashboard;
+      document.getElementById("priority").onchange = loadDashboard;
+
+      // --- PRO VEDOUCIHO ---
+      document.getElementById("managerLoginForm").onsubmit = async (event) => {
+        event.preventDefault();
+        const password = new FormData(event.target).get("password");
+        const response = await fetch("/api/dashboard/login", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password })
+        });
+        if (!response.ok) { document.getElementById("managerLoginStatus").textContent = "Nesprávné heslo."; return; }
+        document.getElementById("managerLoginPanel").classList.add("hidden");
+        document.getElementById("managerPanel").classList.remove("hidden");
+        loadManagerData();
+      };
+
+      document.getElementById("logoutManager").onclick = () => {
+        document.getElementById("managerPanel").classList.add("hidden");
+        document.getElementById("managerLoginPanel").classList.remove("hidden");
+        document.getElementById("managerLoginStatus").textContent = "";
+        document.querySelector('#managerLoginForm [name="password"]').value = "";
+      };
+
+      document.getElementById("refreshManager").onclick = loadManagerData;
+      document.getElementById("mgrDays").onchange = loadManagerData;
+
+      async function loadManagerData() {
+        const days = document.getElementById("mgrDays").value;
+        const query = new URLSearchParams({ days, technology: "Vse", priority: "Vse" });
+        const response = await fetch(`/api/dashboard?${query}`);
+        if (!response.ok) return;
+        const data = await response.json();
+        document.getElementById("managerUpdated").textContent = `Aktualizováno ${data.updated_at}`;
+        renderComparison(data.metrics, data.manager.prev_metrics, days);
+        renderRecurring(data.manager.recurring);
+        renderSlaBreaches(data.manager.sla_breaches);
+        renderPriorityStats(data.manager.priority_stats || []);
+        renderHourlyChart(data.manager.hourly_chart || []);
+        renderTechnicians(data.manager.technicians || []);
+        renderReopened(data.manager.reopened || []);
+        renderNoSolution(data.manager.no_solution || []);
+      }
+
+      function renderComparison(curr, prev, days) {
+        const label = days === "7" ? "vs předchozích 7 dní" : "vs předchozích 30 dní";
+        function delta(a, b) {
+          if (b === null || b === undefined || a === null || a === undefined) return "";
+          const diff = a - b;
+          if (diff === 0) return `<span style="color:#64748b">= stejné</span>`;
+          const up = diff > 0;
+          const color = up ? "#dc2626" : "#16a34a";
+          const arrow = up ? "▲" : "▼";
+          return `<span style="color:${color};font-size:12px">${arrow} ${Math.abs(diff)}</span>`;
+        }
+        function deltaPercent(a, b) {
+          if (b === null || b === undefined || a === null || a === undefined) return "";
+          const diff = parseFloat((a - b).toFixed(1));
+          if (diff === 0) return `<span style="color:#64748b">= stejné</span>`;
+          const up = diff > 0;
+          const isGood = (a < b); // lower is better for most metrics
+          const color = isGood ? "#16a34a" : "#dc2626";
+          const arrow = up ? "▲" : "▼";
+          return `<span style="color:${color};font-size:12px">${arrow} ${Math.abs(diff)}</span>`;
+        }
+        const items = [
+          { label: "Celkem závad", curr: curr.total, prev: prev?.total, higherIsBad: true },
+          { label: "Nevyřešeno", curr: curr.unresolved, prev: prev?.unresolved, higherIsBad: true },
+          { label: "SLA splněno", curr: `${curr.sla} %`, prev: prev ? `${prev.sla} %` : null, raw: curr.sla, prevRaw: prev?.sla, higherIsBad: false },
+          { label: "Průměrná oprava", curr: curr.avg_repair !== null ? `${curr.avg_repair} min` : "-", prev: prev?.avg_repair !== null ? `${prev?.avg_repair} min` : "-", raw: curr.avg_repair, prevRaw: prev?.avg_repair, higherIsBad: true },
+        ];
+        document.getElementById("comparisonCards").innerHTML = items.map(item => {
+          const d = item.raw !== undefined
+            ? deltaPercent(item.raw, item.prevRaw)
+            : delta(item.curr, item.prev);
+          return `<div class="metric" style="display:flex;flex-direction:column;justify-content:center;gap:2px">
+            <strong style="font-size:28px;line-height:1.1">${item.curr}</strong>
+            <span style="color:#526074;font-size:14px;margin-top:2px">${item.label}</span>
+            <div style="font-size:12px;color:#64748b;margin-top:6px">Předchozí: <b>${item.prev ?? "-"}</b> &nbsp;${d}</div>
+          </div>`;
+        }).join("") + `<div class="metric" style="display:flex;flex-direction:column;justify-content:center;gap:4px;background:#f8fafc">
+          <strong style="font-size:16px;color:#64748b">${label}</strong>
+          <span style="color:#94a3b8;font-size:13px">Srovnávací období</span>
+        </div>`;
+      }
+
+      function renderRecurring(items) {
+        const el = document.getElementById("recurringList");
+        if (!items.length) { el.innerHTML = `<p class="muted">Žádné opakující se problémy v tomto období.</p>`; return; }
+        const max = Math.max(...items.map(i => i.count));
+        el.innerHTML = `<div class="bar-list">${items.map(item => {
+          const width = Math.max(6, item.count / max * 100);
+          const color = item.type === "Místo" ? "#dc2626" : "#f59e0b";
+          return `<div class="bar-row"><span title="${item.name}"><b style="font-size:10px;color:#94a3b8">${item.type}</b> ${item.name}</span><div class="bar-track"><div class="bar-fill" style="width:${width}%;background:${color}"></div></div><b>${item.count}×</b></div>`;
+        }).join("")}</div>`;
+      }
+
+      function renderPriorityStats(items) {
+        const section = document.getElementById("priorityStatsSection");
+        if (!items.length) { section.classList.add("hidden"); return; }
+        section.classList.remove("hidden");
+        const colors = { High: "#dc2626", Medium: "#d97706", Low: "#16a34a" };
+        document.getElementById("priorityStatsGrid").innerHTML = items.map(item => {
+          const c = colors[item.priority] || "#6366f1";
+          return `<div class="metric" style="display:flex;flex-direction:column;justify-content:center;gap:2px;border-left:4px solid ${c}">
+            <strong style="font-size:24px;line-height:1.1;color:${c}">${item.avg_response} min</strong>
+            <span style="color:#526074;font-size:13px">Průměr reakce — ${item.priority}</span>
+            <div style="font-size:12px;color:#64748b;margin-top:4px">${item.count} závad s časem reakce</div>
+          </div>`;
+        }).join("");
+      }
+
+      function renderHourlyChart(items) {
+        const section = document.getElementById("hourlySection");
+        const total = items.reduce((s, i) => s + i.count, 0);
+        if (!total) { section.classList.add("hidden"); return; }
+        section.classList.remove("hidden");
+        const el = document.getElementById("hourlyChart");
+        const max = Math.max(...items.map(i => i.count), 1);
+        el.innerHTML = items.map(item => {
+          const h = Math.round((item.count / max) * 100);
+          const isNight = item.hour < 6 || item.hour >= 18;
+          const bg = isNight ? "#6366f1" : "#0f766e";
+          const label = item.hour.toString().padStart(2, "0") + "h";
+          return `<div title="${label}: ${item.count} závad" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:default">
+            <div style="width:100%;background:${bg};height:${h}%;border-radius:3px 3px 0 0;min-height:${item.count ? 4 : 1}px;opacity:${item.count ? 0.85 : 0.15}"></div>
+            <span style="font-size:9px;color:#94a3b8;writing-mode:vertical-rl;transform:rotate(180deg);line-height:1">${label}</span>
+          </div>`;
+        }).join("");
+      }
+
+      function renderTechnicians(rows) {
+        const section = document.getElementById("techSection");
+        if (!rows.length) { section.classList.add("hidden"); return; }
+        section.classList.remove("hidden");
+        const el = document.getElementById("techTable");
+        document.getElementById("techCount").textContent = `${rows.length} osob`;
+        el.innerHTML = "<thead><tr><th>#</th><th>Nahlásil</th><th>Počet závad</th><th>Prům. oprava (vyřešeno)</th></tr></thead><tbody>" +
+          rows.map((row, i) => `<tr>
+            <td style="color:#94a3b8;width:32px">${i + 1}</td>
+            <td><b>${row.name}</b></td>
+            <td>${row.count}</td>
+            <td>${row.avg_repair !== null ? row.avg_repair + " min" : "<span style='color:#94a3b8'>—</span>"}</td>
+          </tr>`).join("") + "</tbody>";
+      }
+
+      function renderReopened(rows) {
+        const section = document.getElementById("reopenedSection");
+        if (!rows.length) { section.classList.add("hidden"); return; }
+        section.classList.remove("hidden");
+        const el = document.getElementById("reopenedTable");
+        document.getElementById("reopenedCount").textContent = `${rows.length} případů`;
+        el.innerHTML = "<thead><tr><th>Místo</th><th>Technologie</th><th>Vyřešeno</th><th>Znovu nahlášeno</th><th>Odstup</th><th>Popis</th></tr></thead><tbody>" +
+          rows.map(row => `<tr style="background:rgba(251,191,36,0.08)">
+            <td><b>${row.location}</b></td>
+            <td>${row.technology}</td>
+            <td>${row.first_solved}</td>
+            <td>${row.reopened_at}</td>
+            <td><span style="color:#d97706;font-weight:700">${row.hours_between} h</span></td>
+            <td style="color:#526074;font-size:13px">${row.description}</td>
+          </tr>`).join("") + "</tbody>";
+      }
+
+      function renderNoSolution(rows) {
+        const section = document.getElementById("noSolutionSection");
+        if (!rows.length) { section.classList.add("hidden"); return; }
+        section.classList.remove("hidden");
+        const el = document.getElementById("noSolutionTable");
+        document.getElementById("noSolutionCount").textContent = `${rows.length} závad bez popisu`;
+        el.innerHTML = "<thead><tr><th>Čas</th><th>Technologie</th><th>Místo</th><th>Priorita</th><th>Popis závady</th><th>Nahlásil</th></tr></thead><tbody>" +
+          rows.map(row => `<tr style="background:rgba(239,68,68,0.05)">
+            <td>${row.reported_at}</td>
+            <td>${row.technology}</td>
+            <td>${row.location}</td>
+            <td>${priorityBadge(row.priority)}</td>
+            <td style="color:#526074;font-size:13px">${row.description}</td>
+            <td>${row.reported_by}</td>
+          </tr>`).join("") + "</tbody>";
+      }
+
+      function renderSlaBreaches(rows) {
+        const el = document.getElementById("slaBreachTable");
+        document.getElementById("slaBreachCount").textContent = `${rows.length} závad překročilo SLA`;
+        if (!rows.length) { el.innerHTML = `<tbody><tr><td class="empty-state" colspan="8">Žádné SLA přesčasy — skvělá práce!</td></tr></tbody>`; return; }
+        el.innerHTML = "<thead><tr><th>Čas</th><th>Technologie</th><th>Místo</th><th>Priorita</th><th>Směna</th><th>Stav</th><th>Doba opravy</th><th>Překročení</th></tr></thead><tbody>" +
+          rows.map(row => {
+            const nightBadge = row.night_shift
+              ? `<span title="Nahlášeno ve večerních/nočních hodinách (18:00–06:00) — delší doba opravy je očekávatelná" style="display:inline-flex;align-items:center;gap:4px;background:#1e1b4b;color:#a5b4fc;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600;cursor:default">🌙 Noční</span>`
+              : `<span style="display:inline-flex;align-items:center;gap:4px;background:#f0fdf4;color:#15803d;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600">☀️ Denní</span>`;
+            const rowStyle = row.night_shift ? 'style="background:rgba(99,102,241,0.06)"' : '';
+            return `<tr ${rowStyle}><td>${row.reported_at}</td><td>${row.technology}</td><td>${row.location}</td><td>${priorityBadge(row.priority)}</td><td>${nightBadge}</td><td><span style="color:#16a34a;font-weight:600">✔ Vyřešeno</span></td><td>${row.repair_min} min</td><td><span style="color:#dc2626;font-weight:800">+${row.over_by_min} min</span></td></tr>`;
+          }).join("") +
+          "</tbody>";
+      }
+      loadOptions().then(() => {
+        document.querySelector('[name="department"]').onchange = updateCustomFields;
+        document.querySelector('[name="technology"]').onchange = updateCustomFields;
+        updateCustomFields();
+      });
+      setTheme(localStorage.getItem("reportTheme") === "dark");
+    </script>
+  </body>
+</html>

@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Maintenance Helpdesk CZLC4</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: #f6f7f9;
+        color: #172033;
+        font-family: Inter, Arial, sans-serif;
+      }
+      main { width: min(980px, calc(100vw - 32px)); margin: 0 auto; padding: 32px 0 56px; }
+      nav { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 520px; margin: 0 auto 24px; }
+      button, input, select, textarea { font: inherit; }
+      button {
+        min-height: 42px;
+        border: 1px solid #d8dee8;
+        border-radius: 8px;
+        background: white;
+        color: #2f3a4d;
+        cursor: pointer;
+      }
+      button.active, .primary { background: #2457d6; border-color: #2457d6; color: white; }
+      .danger { width: 100%; border-color: #e0a3a3; color: #b42318; margin: 18px 0; }
+      .panel, .card {
+        background: white;
+        border: 1px solid #e1e6ef;
+        border-radius: 8px;
+        padding: 32px;
+      }
+      h1, h2, h3 { margin: 0 0 12px; }
+      h1 { text-align: center; font-size: 34px; }
+      .lead { text-align: center; color: #667085; max-width: 620px; margin: 0 auto 18px; }
+      form { display: grid; gap: 16px; }
+      label { display: grid; gap: 7px; color: #344054; font-weight: 600; }
+      input, select, textarea {
+        width: 100%;
+        border: 1px solid #d8dee8;
+        border-radius: 8px;
+        background: #f8fafc;
+        padding: 12px;
+      }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .status { margin-top: 16px; color: #2457d6; font-weight: 700; }
+      .muted { color: #667085; }
+      .hidden { display: none; }
+      .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 16px 0; }
+      .metric { background: #fff; border: 1px solid #e1e6ef; border-radius: 8px; padding: 14px; text-align: center; }
+      .metric strong { display: block; font-size: 24px; }
+      .toolbar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      th, td { padding: 10px; border-bottom: 1px solid #edf1f7; text-align: left; vertical-align: top; }
+      @media (max-width: 760px) {
+        .grid, .toolbar, .metrics, nav { grid-template-columns: 1fr; }
+        .panel { padding: 20px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <nav>
+        <button id="formTab" class="active">Formular</button>
+        <button id="dashboardTab">Power BI Dashboard</button>
+      </nav>
+
+      <section id="formView" class="panel">
+        <h1>Technical Fault Report</h1>
+        <p class="lead">Please fill in the technical details of the issue. The information will be immediately sent for resolution.</p>
+        <button id="asButton" class="danger">VYPADEK AS</button>
+        <form id="ticketForm">
+          <label>Reported by *<input name="reported_by" required /></label>
+          <div class="grid">
+            <label>1. Department *<select name="department" required></select></label>
+            <label>2. Technology *<select name="technology" required></select></label>
+          </div>
+          <div class="grid">
+            <label>3. Location *<input name="location" required /></label>
+            <label>4. Priority<select name="priority"></select></label>
+          </div>
+          <label>Detailed fault description *<textarea name="description" rows="7" required></textarea></label>
+          <label>Additional note<textarea name="note" rows="3"></textarea></label>
+          <label>Attachments<input name="attachments" type="file" multiple accept=".jpg,.jpeg,.png,.pdf" /></label>
+          <button class="primary" type="submit">SUBMIT REPORT</button>
+        </form>
+        <p id="formStatus" class="status"></p>
+      </section>
+
+      <section id="dashboardView" class="hidden">
+        <section id="loginPanel" class="panel">
+          <h2>Pristup do dashboardu</h2>
+          <p class="muted">Dashboard je dostupny pouze opravnenym uzivatelum.</p>
+          <form id="loginForm">
+            <label>Zadejte heslo<input name="password" type="password" /></label>
+            <button class="primary" type="submit">Prihlasit se</button>
+          </form>
+          <p id="loginStatus" class="status"></p>
+        </section>
+        <section id="dashboardPanel" class="hidden">
+          <div class="panel">
+            <h1>Power BI Dashboard - CZLC4</h1>
+            <p id="updated" class="muted"></p>
+            <div class="toolbar">
+              <select id="days"><option value="7">7 dni</option><option value="30" selected>30 dni</option><option value="all">Vse</option></select>
+              <select id="technology"><option value="Vse">Vse technologie</option></select>
+              <select id="priority"><option value="Vse">Vse priority</option><option>High</option><option>Medium</option><option>Low</option></select>
+            </div>
+            <div id="metrics" class="metrics"></div>
+          </div>
+          <section class="card">
+            <h3>Nevyresene zavady a zavady V reseni</h3>
+            <div style="overflow:auto"><table id="rows"></table></div>
+          </section>
+        </section>
+      </section>
+    </main>
+    <script>
+      const formTab = document.getElementById("formTab");
+      const dashboardTab = document.getElementById("dashboardTab");
+      const formView = document.getElementById("formView");
+      const dashboardView = document.getElementById("dashboardView");
+      const formStatus = document.getElementById("formStatus");
+
+      function show(view) {
+        const isForm = view === "form";
+        formView.classList.toggle("hidden", !isForm);
+        dashboardView.classList.toggle("hidden", isForm);
+        formTab.classList.toggle("active", isForm);
+        dashboardTab.classList.toggle("active", !isForm);
+      }
+      formTab.onclick = () => show("form");
+      dashboardTab.onclick = () => show("dashboard");
+
+      async function loadOptions() {
+        const response = await fetch("/api/options");
+        const options = await response.json();
+        fillSelect("department", options.departments);
+        fillSelect("technology", options.technologies);
+        fillSelect("priority", options.priorities, "Medium");
+      }
+
+      function fillSelect(name, values, selected = "") {
+        const select = document.querySelector(`[name="${name}"]`);
+        select.innerHTML = name === "priority" ? "" : "<option></option>";
+        values.forEach((value) => {
+          const option = document.createElement("option");
+          option.textContent = value;
+          option.value = value;
+          if (value === selected) option.selected = true;
+          select.appendChild(option);
+        });
+      }
+
+      async function fileToBase64(file) {
+        const buffer = await file.arrayBuffer();
+        let binary = "";
+        new Uint8Array(buffer).forEach((byte) => binary += String.fromCharCode(byte));
+        return btoa(binary);
+      }
+
+      document.getElementById("ticketForm").onsubmit = async (event) => {
+        event.preventDefault();
+        const form = new FormData(event.target);
+        const attachments = await Promise.all([...event.target.attachments.files].map(async (file) => ({
+          name: file.name,
+          data: await fileToBase64(file)
+        })));
+        const payload = Object.fromEntries(form.entries());
+        payload.attachments = attachments;
+        const response = await fetch("/api/tickets", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        formStatus.textContent = response.ok ? "Ticket byl odeslan do Teams." : "Nepodarilo se odeslat. Zkontrolujte VPN.";
+      };
+
+      document.getElementById("asButton").onclick = async () => {
+        const response = await fetch("/api/tickets/as-outage", { method: "POST" });
+        formStatus.textContent = response.ok ? "Ticket AS byl odeslan do Teams." : "Nepodarilo se odeslat AS ticket.";
+      };
+
+      document.getElementById("loginForm").onsubmit = async (event) => {
+        event.preventDefault();
+        const password = new FormData(event.target).get("password");
+        const response = await fetch("/api/dashboard/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password })
+        });
+        if (!response.ok) {
+          document.getElementById("loginStatus").textContent = "Nespravne heslo nebo chybi konfigurace.";
+          return;
+        }
+        document.getElementById("loginPanel").classList.add("hidden");
+        document.getElementById("dashboardPanel").classList.remove("hidden");
+        loadDashboard();
+      };
+
+      async function loadDashboard() {
+        const query = new URLSearchParams({
+          days: document.getElementById("days").value,
+          technology: document.getElementById("technology").value,
+          priority: document.getElementById("priority").value
+        });
+        const response = await fetch(`/api/dashboard?${query}`);
+        const data = await response.json();
+        document.getElementById("updated").textContent = `Aktualizovano ${data.updated_at}`;
+        const tech = document.getElementById("technology");
+        if (tech.options.length === 1) {
+          data.filters.technologies.forEach((item) => {
+            const option = document.createElement("option");
+            option.textContent = item;
+            option.value = item;
+            tech.appendChild(option);
+          });
+        }
+        document.getElementById("metrics").innerHTML = [
+          ["Celkem zavad", data.metrics.total],
+          ["Vyreseno", data.metrics.solved],
+          ["Nevyreseno", data.metrics.unresolved],
+          ["SLA <30 min", `${data.metrics.sla} %`]
+        ].map(([label, value]) => `<div class="metric"><strong>${value}</strong><span>${label}</span></div>`).join("");
+        document.getElementById("rows").innerHTML = "<thead><tr><th>Cas</th><th>Technologie</th><th>Misto</th><th>Priorita</th><th>Popis</th><th>Nahlasil</th><th>Stav</th></tr></thead><tbody>" +
+          data.unresolved_rows.slice(0, 100).map((row) => `<tr><td>${row.reported_at}</td><td>${row.technology}</td><td>${row.location}</td><td>${row.priority}</td><td>${row.description}</td><td>${row.reported_by}</td><td>${row.status}</td></tr>`).join("") +
+          "</tbody>";
+      }
+      document.getElementById("days").onchange = loadDashboard;
+      document.getElementById("technology").onchange = loadDashboard;
+      document.getElementById("priority").onchange = loadDashboard;
+      loadOptions();
+    </script>
+  </body>
+</html>
