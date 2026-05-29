@@ -1,4 +1,4 @@
-FROM registry.alza.cz/python:3.12-slim
+FROM registry.alza.cz/hub.docker.com/library/python:3.12-slim
 
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
 
