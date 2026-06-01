@@ -12,10 +12,20 @@ from app.config import settings
 from app.services.store import upsert_ticket_record
 
 
-def _field(row: dict, *names: str) -> str:
-    for name in names:
-        value = row.get(name)
-        if value not in (None, ""):
+def _norm(value: str) -> str:
+    text = str(value or "").lower()
+    table = str.maketrans({
+        "ě": "e", "š": "s", "č": "c", "ř": "r", "ž": "z", "ý": "y",
+        "á": "a", "í": "i", "é": "e", "ú": "u", "ů": "u", "ó": "o",
+        "ť": "t", "ď": "d", "ň": "n",
+    })
+    return text.translate(table).replace(" ", "").replace("_", "").replace("-", "")
+
+
+def _field(row: dict, *aliases: str) -> str:
+    wanted = {_norm(alias) for alias in aliases}
+    for key, value in row.items():
+        if _norm(key) in wanted and value not in (None, ""):
             return str(value).strip()
     return ""
 
@@ -23,7 +33,7 @@ def _field(row: dict, *names: str) -> str:
 def _parse_datetime(value: str):
     if not value:
         return None
-    text = str(value)
+    text = str(value).strip()
     try:
         parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
     except ValueError:
@@ -49,7 +59,7 @@ def _sheet_csv_url() -> str:
 
 
 def _ticket_id(row: dict) -> str:
-    teams_id = _field(row, "ID Teams")
+    teams_id = _field(row, "ID Teams", "IDTeams")
     if teams_id:
         return "teams-" + hashlib.sha1(teams_id.encode("utf-8")).hexdigest()
     raw = "|".join(
@@ -88,9 +98,21 @@ def _to_record(row: dict) -> dict:
         "reported_by": _field(row, "Nahlásil", "Nahlasil"),
         "status": _field(row, "Stav", "Status"),
         "solution": _field(row, "Popis řešení", "Popis reseni"),
-        "teams_id": _field(row, "ID Teams"),
+        "teams_id": _field(row, "ID Teams", "IDTeams"),
         "attachment": _field(row, "Příloha", "Priloha"),
     }
+
+
+def import_csv_content(content: bytes) -> dict:
+    reader = csv.DictReader(io.StringIO(content.decode("utf-8-sig")))
+    imported = 0
+    for row in reader:
+        clean_row = {str(k).strip(): v for k, v in row.items() if k is not None}
+        if not any(str(v or "").strip() for v in clean_row.values()):
+            continue
+        upsert_ticket_record(_ticket_id(clean_row), _to_record(clean_row))
+        imported += 1
+    return {"enabled": True, "imported": imported}
 
 
 def import_google_sheet_tickets() -> dict:
@@ -101,13 +123,4 @@ def import_google_sheet_tickets() -> dict:
     session.trust_env = False
     response = session.get(_sheet_csv_url(), timeout=30, headers={"User-Agent": "Mozilla/5.0"})
     response.raise_for_status()
-
-    reader = csv.DictReader(io.StringIO(response.content.decode("utf-8-sig")))
-    imported = 0
-    for row in reader:
-        clean_row = {str(k).strip(): v for k, v in row.items() if k is not None}
-        if not any(str(v or "").strip() for v in clean_row.values()):
-            continue
-        upsert_ticket_record(_ticket_id(clean_row), _to_record(clean_row))
-        imported += 1
-    return {"enabled": True, "imported": imported}
+    return import_csv_content(response.content)

@@ -522,6 +522,16 @@
             </div>
           </div>
 
+          <section class="card">
+            <h3>Import historickych dat do Firestore</h3>
+            <p class="muted" style="font-size:13px">Jednorazove nahrajte CSV export z puvodni Google Sheets evidence. Po importu uz dashboard cte data z Firestore.</p>
+            <form id="csvImportForm" style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
+              <label style="flex:1;min-width:260px">CSV soubor<input id="csvImportFile" name="file" type="file" accept=".csv,text/csv" /></label>
+              <button class="primary" type="submit">Importovat data</button>
+            </form>
+            <p id="csvImportStatus" class="status"></p>
+          </section>
+
           <section class="card" id="comparisonSection">
             <h3>📈 Srovnání s předchozím obdobím</h3>
             <div id="comparisonCards" class="metrics" style="grid-template-columns:repeat(5,minmax(140px,1fr))"></div>
@@ -691,6 +701,7 @@
       let dashboardRows = [];
       let unresolvedRows = [];
       let activeTableFilter = "";
+      let managerPassword = "";
       const maxAttachmentSize = 10 * 1024 * 1024;
       const allowedAttachmentTypes = ["image/jpeg", "image/png", "application/pdf"];
 
@@ -1139,6 +1150,7 @@
         });
         if (!response.ok) { document.getElementById("managerLoginStatus").textContent = "Nesprávné heslo."; return; }
         document.getElementById("managerLoginPanel").classList.add("hidden");
+        managerPassword = password;
         document.getElementById("managerPanel").classList.remove("hidden");
         loadManagerData();
       };
@@ -1148,10 +1160,30 @@
         document.getElementById("managerLoginPanel").classList.remove("hidden");
         document.getElementById("managerLoginStatus").textContent = "";
         document.querySelector('#managerLoginForm [name="password"]').value = "";
+        managerPassword = "";
       };
 
       document.getElementById("refreshManager").onclick = loadManagerData;
       document.getElementById("mgrDays").onchange = loadManagerData;
+      document.getElementById("csvImportForm").onsubmit = async (event) => {
+        event.preventDefault();
+        const file = document.getElementById("csvImportFile").files[0];
+        const status = document.getElementById("csvImportStatus");
+        if (!file) { status.textContent = "Vyberte CSV soubor."; return; }
+        const body = new FormData();
+        body.append("password", managerPassword);
+        body.append("file", file);
+        status.textContent = "Importuji data...";
+        const response = await fetch("/api/dashboard/import-csv", { method: "POST", body });
+        if (!response.ok) {
+          status.textContent = `Import se nepodaril: ${await response.text()}`;
+          return;
+        }
+        const result = await response.json();
+        status.textContent = `Import hotovy: ${result.imported} radku ulozeno do Firestore.`;
+        await loadDashboard();
+        await loadManagerData();
+      };
 
       async function loadManagerData() {
         const days = document.getElementById("mgrDays").value;

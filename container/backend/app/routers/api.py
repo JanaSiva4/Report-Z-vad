@@ -2,13 +2,14 @@ from datetime import datetime, timezone
 import re
 import unicodedata
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
 
 from app.auth import UserInfo, get_current_user
 from app.config import settings
 from app.models.tickets import DashboardLogin, TeamsReply, TicketCreate
 from app.services.dashboard import load_dashboard
 from app.services.reminder import send_teams_reminder
+from app.services.sheets_import import import_csv_content
 from app.services.shift_report import build_shift_summary
 from app.services.tickets import submit_ticket
 from app.services.store import update_ticket_by_teams_id
@@ -58,6 +59,17 @@ async def dashboard_login(payload: DashboardLogin):
 @router.get("/dashboard")
 async def dashboard(days: str = "30", technology: str = "Vse", priority: str = "Vse"):
     return load_dashboard(days=days, technology=technology, priority=priority)
+
+
+@router.post("/dashboard/import-csv")
+async def import_dashboard_csv(password: str = Form(...), file: UploadFile = File(...)):
+    if not settings.dashboard_password:
+        raise HTTPException(status_code=503, detail="Dashboard password neni nastaveny.")
+    if password.strip() != settings.dashboard_password.strip():
+        raise HTTPException(status_code=401, detail="Nespravne heslo.")
+    if not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Nahrajte CSV soubor.")
+    return import_csv_content(await file.read())
 
 
 
