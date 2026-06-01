@@ -9,6 +9,7 @@ from app.config import settings
 from app.models.tickets import DashboardLogin, TeamsReply, TicketCreate
 from app.services.dashboard import load_dashboard
 from app.services.reminder import send_teams_reminder
+from app.services.shift_report import build_shift_summary
 from app.services.tickets import submit_ticket
 from app.services.store import update_ticket_by_teams_id
 
@@ -94,3 +95,10 @@ async def teams_reply(payload: TeamsReply, x_api_key: str = Header(default="")):
         raise HTTPException(status_code=404, detail="Zavada s timto Teams ID nebyla nalezena.")
 
     return {"status": "ok"}
+
+
+@router.get("/reports/shift-summary")
+async def shift_summary(x_api_key: str = Header(default="")):
+    if settings.webhook_api_key and x_api_key != settings.webhook_api_key:
+        raise HTTPException(status_code=401, detail="Neplatny API klic.")
+    return build_shift_summary()

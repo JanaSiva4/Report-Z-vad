@@ -99,6 +99,17 @@ Body:
 
 Backend podle textu doplni prvni reakci, stav `V reseni` nebo `Vyreseno` a popis reseni.
 
+## Napojeni denniho AI reportu
+
+Samostatny n8n workflow pro denni AI report muze misto Google Sheets cist souhrn z aplikace:
+
+```text
+GET /api/reports/shift-summary
+X-API-Key: <WEBHOOK_API_KEY>
+```
+
+Endpoint vraci JSON se souhrnem nocni smeny, denni smeny a hotovym textem v poli `text`. Tento vystup nahrazuje puvodni vetev `Google Sheets - poruchy`.
+
 ## Lokalni Google Cloud pristup
 
 Pro lokalni vyvoj se service account nepridava do kodu ani do `config.env`. Pouziva se prihlaseni pres Google Cloud CLI a impersonace service accountu:
