@@ -44,6 +44,17 @@ def create_ticket_record(data: dict[str, Any]) -> dict[str, Any]:
     return record
 
 
+def upsert_ticket_record(ticket_id: str, data: dict[str, Any]) -> None:
+    db = _client()
+    now = utc_now()
+    record = {
+        **data,
+        "id": ticket_id,
+        "updated_at": now,
+    }
+    db.collection(TICKETS_COLLECTION).document(ticket_id).set(record, merge=True)
+
+
 def update_ticket(ticket_id: str, data: dict[str, Any]) -> None:
     db = _client()
     db.collection(TICKETS_COLLECTION).document(ticket_id).update({**data, "updated_at": utc_now()})

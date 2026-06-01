@@ -2,6 +2,7 @@ from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 import unicodedata
 
+from app.services.sheets_import import import_google_sheet_tickets
 from app.services.store import list_ticket_records
 
 
@@ -164,6 +165,9 @@ def _prepare_row(row):
 
 def load_dashboard(days: str = "30", technology: str = "Vse", priority: str = "Vse"):
     raw_rows = list_ticket_records()
+    if not raw_rows:
+        import_google_sheet_tickets()
+        raw_rows = list_ticket_records()
 
     rows = [_prepare_row(dict(row)) for row in raw_rows]
     rows = [row for row in rows if row["reported_at"]]
