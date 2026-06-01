@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     gcs_bucket: str = Field(default="", alias="GCS_BUCKET")
     apps_script_url: str = Field(default="", alias="APPS_SCRIPT_URL")
     webhook_url: str = Field(default="", alias="WEBHOOK_URL")
+    webhook_api_key: str = Field(default="", alias="WEBHOOK_API_KEY")
     dashboard_password: str = Field(default="", alias="DASHBOARD_PASSWORD")
     teams_reminder_webhook: str = Field(default="", alias="TEAMS_REMINDER_WEBHOOK")
     sheets_url: str = Field(default="", alias="SHEETS_URL")

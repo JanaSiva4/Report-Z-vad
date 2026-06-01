@@ -7,8 +7,9 @@ Projekt je pripraveny pro firemni Vibe Coding platformu. Puvodni Streamlit verze
 ## Co aplikace umi
 
 - Formular pro nahlaseni zavady vcetne oddeleni, technologie, mista, priority a popisu.
-- Odeslani zavady do napojene automatizace.
-- Dashboard nad daty z Google Sheets.
+- Ulozeni zavady do Firestore v GCP.
+- Odeslani dat do n8n pouze pro integrace, ktere aplikace nema delat primo, hlavne Teams a SharePoint.
+- Dashboard nad daty z backendu aplikace.
 - Prehled nevyresenych zavad a zavad v reseni.
 - Prehled vsech dat, grafy, filtry a export.
 - Sprava pripominek pres napojeny webhook.
@@ -25,6 +26,8 @@ Hlavni pozadavky platformy:
 - aplikace posloucha na portu 8080
 - Dockerfile spousti `uvicorn`
 - projektova konfigurace je v `container/config.env`
+- strukturovana data zavad jsou ve Firestore
+- priloha/Teams/SharePoint integrace probiha pres n8n webhook
 
 ## Lokalni spusteni
 
@@ -61,6 +64,40 @@ Vyplnene hodnoty:
 Service account se do `config.env` nedava. Platforma ho pouziva pri behu aplikace.
 
 Citlive hodnoty jako webhook URL, podpisove tokeny a hesla se do repozitare neukladaji. Aplikace je umi nacist z prostredi pri behu aplikace.
+
+Runtime hodnoty mimo repozitar:
+
+- `WEBHOOK_URL` - n8n webhook pro Teams/SharePoint notifikaci po vytvoreni zavady
+- `WEBHOOK_API_KEY` - sdileny API klic mezi aplikaci a n8n; aplikace ho posila v hlavicce `X-API-Key` a stejny klic vyzaduje u callbacku z n8n
+- `DASHBOARD_PASSWORD` - docasne heslo dashboardu, pokud se nepouzije jen IAP/Alza prihlaseni
+- `TEAMS_REMINDER_WEBHOOK` - volitelny webhook pro pripominky do Teams
+
+Google Sheets uz nejsou primarni uloziste dat. Pokud se pouziji, tak jen docasne pro migraci nebo porovnani dat.
+
+## n8n integrace
+
+Aplikace vytvori zavadu ve Firestore a potom zavola n8n webhook. Payload obsahuje bezna pole formulare a `ticket_id`.
+
+n8n muze po odeslani Teams zpravy vratit JSON s `teams_id`, ktery si aplikace ulozi k zavade.
+
+Pokud n8n sleduje odpovedi v Teams vlakne, muze poslat callback:
+
+```text
+POST /api/integrations/teams-reply
+X-API-Key: <WEBHOOK_API_KEY>
+```
+
+Body:
+
+```json
+{
+  "teams_id": "ID puvodni Teams zpravy",
+  "message": "text odpovedi z Teams",
+  "author": "jmeno autora"
+}
+```
+
+Backend podle textu doplni prvni reakci, stav `V reseni` nebo `Vyreseno` a popis reseni.
 
 ## Lokalni Google Cloud pristup
 

@@ -1,15 +1,8 @@
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
-import csv
-import io
-import re
-import time
 import unicodedata
 
-import requests
-from fastapi import HTTPException
-
-from app.config import settings
+from app.services.store import list_ticket_records
 
 
 try:
@@ -28,6 +21,11 @@ def _normalize_text(value: str) -> str:
 def _parse_datetime(value):
     if not value:
         return None
+    if isinstance(value, datetime):
+        parsed = value
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(PRAGUE_TZ)
     text = str(value)
     try:
         parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
@@ -43,6 +41,14 @@ def _parse_datetime(value):
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed.astimezone(PRAGUE_TZ)
+
+
+def _field(row, *names):
+    for name in names:
+        value = row.get(name)
+        if value not in (None, ""):
+            return value
+    return ""
 
 
 def _minutes_between(start, end):
@@ -79,6 +85,7 @@ def _is_as_stop(row):
         "Nahlasil", "Nahlásil", "Nahlasil/a", "Nahlásil/a",
         "Technologie", "Typ", "Kategorie",
         "Popis zavady", "Popis závady",
+        "description", "reported_by", "technology",
     ]
     combined = " ".join(str(row.get(k, "")) for k in keys)
     normalized = _normalize_text(combined)
@@ -109,11 +116,11 @@ def _prepare_row(row):
         row["Oddeleni"] = "AS"
         row["Oddělení"] = "AS"
 
-    reported_at = _parse_datetime(row.get("Cas nahlaseni") or row.get("Čas nahlášení"))
-    reacted_at = _parse_datetime(row.get("Cas reakce") or row.get("Čas reakce"))
-    solved_at = _parse_datetime(row.get("Cas vyreseni") or row.get("Čas vyřešení"))
+    reported_at = _parse_datetime(_field(row, "created_at", "reported_at", "Cas nahlaseni", "Čas nahlášení"))
+    reacted_at = _parse_datetime(_field(row, "reacted_at", "Cas reakce", "Čas reakce"))
+    solved_at = _parse_datetime(_field(row, "solved_at", "Cas vyreseni", "Čas vyřešení"))
     # Oseknout leading apostrof — Google Sheets občas vrací "'V řešení" místo "V řešení"
-    status = str(row.get("Stav", "") or row.get("Status", "")).strip().lstrip("'")
+    status = str(_field(row, "status", "Stav", "Status")).strip().lstrip("'")
     status_norm = _normalize_text(status)
 
     # Logika: otevřená = prázdný Stav NEBO "V řešení"
@@ -125,9 +132,9 @@ def _prepare_row(row):
     response_min = _minutes_between(reported_at, reacted_at)
     repair_min = _minutes_between(reported_at, solved_at)
 
-    technology = _clean_chart_value(row.get("Technologie"), "Vypadek AS")
-    department = _clean_chart_value(row.get("Oddělení") or row.get("Oddeleni"), "AS")
-    location = _clean_chart_value(row.get("Místo") or row.get("Misto"), "AS")
+    technology = _clean_chart_value(_field(row, "technology", "Technologie"), "Vypadek AS")
+    department = _clean_chart_value(_field(row, "department", "Oddělení", "Oddeleni"), "AS")
+    location = _clean_chart_value(_field(row, "location", "Místo", "Misto"), "AS")
 
     if technology == "Vypadek AS":
         department = "AS"
@@ -142,10 +149,10 @@ def _prepare_row(row):
         "department": department,
         "technology": technology,
         "location": location,
-        "priority": _normalize_priority(row.get("Priorita")),
-        "description": row.get("Popis") or "",
-        "reported_by": row.get("Nahlásil") or row.get("Nahlasil") or "",
-        "solution": row.get("Popis řešení") or row.get("Popis reseni") or "",
+        "priority": _normalize_priority(_field(row, "priority", "Priorita")),
+        "description": _field(row, "description", "Popis"),
+        "reported_by": _field(row, "reported_by", "Nahlásil", "Nahlasil"),
+        "solution": _field(row, "solution", "Popis řešení", "Popis reseni"),
         "status": status,
         "solved": solved,
         "in_progress": in_progress,
@@ -156,27 +163,7 @@ def _prepare_row(row):
 
 
 def load_dashboard(days: str = "30", technology: str = "Vse", priority: str = "Vse"):
-    if not settings.sheets_url:
-        raise HTTPException(status_code=503, detail="Google Sheets URL neni nakonfigurovana.")
-
-    try:
-        # Čteme přímo z Google Sheets jako CSV — žádné Apps Script, žádný caching
-        m = re.search(r'/spreadsheets/d/([a-zA-Z0-9-_]+)', settings.sheets_url)
-        if not m:
-            raise ValueError("Nelze zjistit ID spreadsheetu z SHEETS_URL")
-        spreadsheet_id = m.group(1)
-        csv_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export?format=csv&gid=0&_t={int(time.time())}"
-
-        session = requests.Session()
-        session.trust_env = False
-        response = session.get(csv_url, timeout=30, allow_redirects=True, headers={"User-Agent": "Mozilla/5.0"})
-        response.raise_for_status()
-
-        content = response.content.decode("utf-8-sig")
-        reader = csv.DictReader(io.StringIO(content))
-        raw_rows = [{k.strip(): v for k, v in row.items()} for row in reader]
-    except requests.RequestException as exc:
-        raise HTTPException(status_code=502, detail=f"Data se nepodarilo nacist: {exc}") from exc
+    raw_rows = list_ticket_records()
 
     rows = [_prepare_row(dict(row)) for row in raw_rows]
     rows = [row for row in rows if row["reported_at"]]

@@ -19,3 +19,9 @@ class TicketCreate(BaseModel):
 
 class DashboardLogin(BaseModel):
     password: str
+
+
+class TeamsReply(BaseModel):
+    teams_id: str = Field(min_length=1)
+    message: str = Field(min_length=1)
+    author: str = ""
