@@ -48,12 +48,10 @@ async def create_ticket(ticket: TicketCreate):
 
 
 @router.post("/dashboard/login")
-async def dashboard_login(payload: DashboardLogin):
-    if not settings.dashboard_password:
-        raise HTTPException(status_code=503, detail="Dashboard password neni nastaveny.")
-    if payload.password.strip() != settings.dashboard_password.strip():
+async def dashboard_login(payload: DashboardLogin, user: UserInfo = Depends(get_current_user)):
+    if settings.dashboard_password and payload.password.strip() != settings.dashboard_password.strip():
         raise HTTPException(status_code=401, detail="Nespravne heslo.")
-    return {"status": "ok"}
+    return {"status": "ok", "user": user.email}
 
 
 @router.get("/dashboard")
@@ -62,10 +60,12 @@ async def dashboard(days: str = "30", technology: str = "Vse", priority: str = "
 
 
 @router.post("/dashboard/import-csv")
-async def import_dashboard_csv(password: str = Form(...), file: UploadFile = File(...)):
-    if not settings.dashboard_password:
-        raise HTTPException(status_code=503, detail="Dashboard password neni nastaveny.")
-    if password.strip() != settings.dashboard_password.strip():
+async def import_dashboard_csv(
+    password: str = Form(default=""),
+    file: UploadFile = File(...),
+    user: UserInfo = Depends(get_current_user),
+):
+    if settings.dashboard_password and password.strip() != settings.dashboard_password.strip():
         raise HTTPException(status_code=401, detail="Nespravne heslo.")
     if not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="Nahrajte CSV soubor.")
