@@ -5,4 +5,5 @@ __pycache__/
 .tmp-pip/
 node_modules/
 .env
+.local_test_store/
 .DS_Store

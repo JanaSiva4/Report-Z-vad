@@ -21,6 +21,12 @@ class DashboardLogin(BaseModel):
     password: str
 
 
+class TicketUpdate(BaseModel):
+    status: str = Field(pattern="^(|V .+|Ceka|Čeká|Vy.+)$")
+    solution: str = ""
+    technician: str = ""
+
+
 class TeamsReply(BaseModel):
     teams_id: str = Field(min_length=1)
     message: str = Field(min_length=1)

@@ -1,4 +1,4 @@
-from collections import Counter, defaultdict
+﻿from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 import unicodedata
 
@@ -17,6 +17,24 @@ except Exception:
 def _normalize_text(value: str) -> str:
     normalized = unicodedata.normalize("NFD", value.lower())
     return normalized.encode("ascii", "ignore").decode("ascii")
+
+
+def _fix_mojibake(value):
+    if not isinstance(value, str):
+        return value
+    text = value
+    markers = tuple(chr(code) for code in (0x0102, 0x0104, 0x0105, 0x00e2, 0x00f0))
+    for _ in range(2):
+        if not any(marker in text for marker in markers):
+            break
+        try:
+            fixed = text.encode("latin1").decode("utf-8")
+        except UnicodeError:
+            break
+        if fixed == text:
+            break
+        text = fixed
+    return text.replace("\ufffd", "").strip()
 
 
 def _parse_datetime(value):
@@ -48,7 +66,7 @@ def _field(row, *names):
     for name in names:
         value = row.get(name)
         if value not in (None, ""):
-            return value
+            return _fix_mojibake(value)
     return ""
 
 
@@ -63,7 +81,7 @@ def _format_dt(value):
 
 
 def _clean_chart_value(value, empty_label="-"):
-    text = str(value or "").strip()
+    text = str(_fix_mojibake(value) or "").strip()
     if text in {"", "-", "—", "–", "_"}:
         return empty_label
     if _normalize_text(text) == "as":
@@ -80,7 +98,7 @@ def _normalize_priority(value):
 
 
 def _is_as_stop(row):
-    # Prohledáme všechny relevantní sloupce (i varianty s/bez diakritiky)
+    # Prohledame vsechny relevantni sloupce (i varianty s/bez diakritiky).
     keys = [
         "Popis", "Poznamka", "Poznámka", "Pozn", "Pozn.",
         "Nahlasil", "Nahlásil", "Nahlasil/a", "Nahlásil/a",
@@ -94,7 +112,7 @@ def _is_as_stop(row):
         "system stop alert" in normalized
         or "autostore - system stop alert" in normalized
         or "autostore system stop" in normalized
-        or "pozadavek na technika as" in normalized          # z Apps Scriptu: "POŽADAVEK NA TECHNIKA AS"
+        or "pozadavek na technika as" in normalized
         or ("noreply-cubeanalytics@autostoresystem.com" in normalized and "has stopped" in normalized)
         or ("cubeanalytics" in normalized and "system stop" in normalized)
     )
@@ -110,7 +128,7 @@ def _prepare_row(row):
         row["Místo"] = "AutoStore"
         row["Priorita"] = "High"
 
-    # Pokud je Technologie ručně nastavena na "Výpadek AS" (s diakritikou), normalizuj
+    # Pokud je Technologie rucne nastavena na "Vypadek AS", normalizuj.
     tech_raw = _normalize_text(str(row.get("Technologie", "")))
     if tech_raw in {"vypadek as", "vypadek-as", "autostore vypadek", "vypadek autostore"}:
         row["Technologie"] = "Vypadek AS"
@@ -120,16 +138,17 @@ def _prepare_row(row):
     reported_at = _parse_datetime(_field(row, "created_at", "reported_at", "Cas nahlaseni", "Čas nahlášení"))
     reacted_at = _parse_datetime(_field(row, "reacted_at", "Cas reakce", "Čas reakce"))
     solved_at = _parse_datetime(_field(row, "solved_at", "Cas vyreseni", "Čas vyřešení"))
-    # Oseknout leading apostrof — Google Sheets občas vrací "'V řešení" místo "V řešení"
+    reminded_at = _parse_datetime(_field(row, "reminded_at"))
+    # Oseknout leading apostrof z historickych Google Sheets dat.
     status = str(_field(row, "status", "Stav", "Status")).strip().lstrip("'")
     status_norm = _normalize_text(status)
 
-    # Logika: otevřená = prázdný Stav NEBO "V řešení"
-    # Vyřešená = jakýkoliv jiný neprázdný Stav (Vyřešeno, Done, Hotovo, ...)
-    # Fallback: pokud je vyplněný Čas vyřešení → vždy vyřešeno (i když Stav zapomněli změnit)
+    # Fallback: pokud je vyplneny cas vyreseni, bereme zavadu jako vyresenou.
     _in_progress_norms = {"v reseni", "v rieseni", "reseni", "rieseni", "in progress", "in_progress"}
+    _waiting_norms = {"ceka", "ceka na servis", "ceka na dil", "waiting", "pending", "ordered"}
     in_progress = status_norm in _in_progress_norms
-    solved = (bool(status_norm) and not in_progress) or (solved_at is not None)
+    waiting = status_norm in _waiting_norms
+    solved = (bool(status_norm) and not in_progress and not waiting) or (solved_at is not None)
     response_min = _minutes_between(reported_at, reacted_at)
     repair_min = _minutes_between(reported_at, solved_at)
 
@@ -142,11 +161,15 @@ def _prepare_row(row):
         location = "AS"
 
     return {
+        "id": _field(row, "id"),
         "reported_at": reported_at,
         "reported_at_text": _format_dt(reported_at),
         "reacted_at_text": _format_dt(reacted_at),
         "solved_at": solved_at,
         "solved_at_text": _format_dt(solved_at),
+        "reminded": bool(row.get("reminded")),
+        "reminded_at_text": _format_dt(reminded_at),
+        "reminded_by": _field(row, "reminded_by"),
         "department": department,
         "technology": technology,
         "location": location,
@@ -154,9 +177,12 @@ def _prepare_row(row):
         "description": _field(row, "description", "Popis"),
         "reported_by": _field(row, "reported_by", "Nahlásil", "Nahlasil"),
         "solution": _field(row, "solution", "Popis řešení", "Popis reseni"),
-        "status": status,
+        "attachments": row.get("attachments") if isinstance(row.get("attachments"), list) else [],
+        "technician": _field(row, "technician", "Technik"),
+        "status": _fix_mojibake(status),
         "solved": solved,
         "in_progress": in_progress,
+        "waiting": waiting,
         "response_min": response_min,
         "repair_min": repair_min,
         "sla_met": repair_min is not None and repair_min <= 60,
@@ -189,34 +215,37 @@ def load_dashboard(days: str = "30", technology: str = "Vse", priority: str = "V
     total = len(rows)
     solved = sum(1 for row in rows if row["solved"])
     in_progress = sum(1 for row in rows if row["in_progress"])
-    unresolved = total - solved - in_progress
+    waiting = sum(1 for row in rows if row["waiting"])
+    unresolved = total - solved - in_progress - waiting
     response_values = [row["response_min"] for row in rows if row["response_min"] is not None]
     repair_values = [row["repair_min"] for row in rows if row["solved"] and row["repair_min"] is not None]
-    # SLA se počítá jen ze závad "Vyřešeno" — "V řešení" (čeká na servis/díl) se nezapočítává
+    # SLA se pocita jen ze zavad ve stavu Vyreseno.
     solved_rows = [row for row in rows if row["solved"]]
     sla = round(sum(1 for row in solved_rows if row["sla_met"]) / len(solved_rows) * 100, 1) if solved_rows else 0
 
-    # Předchozí období pro srovnání
+    # Predchozi obdobi pro srovnani.
     prev_metrics = None
     if days in {"7", "30"}:
         prev_cutoff = cutoff - timedelta(days=int(days))
         prev_rows = [row for row in base_rows if prev_cutoff <= row["reported_at"] < cutoff]
         prev_total = len(prev_rows)
         prev_solved = sum(1 for r in prev_rows if r["solved"])
-        prev_unresolved = prev_total - prev_solved - sum(1 for r in prev_rows if r["in_progress"])
+        prev_unresolved = prev_total - prev_solved - sum(1 for r in prev_rows if r["in_progress"]) - sum(1 for r in prev_rows if r["waiting"])
         prev_repair = [r["repair_min"] for r in prev_rows if r["solved"] and r["repair_min"] is not None]
         prev_sla = round(sum(1 for r in prev_rows if r["sla_met"]) / prev_total * 100, 1) if prev_total else 0
         prev_metrics = {
             "total": prev_total,
             "solved": prev_solved,
+            "in_progress": sum(1 for r in prev_rows if r["in_progress"]),
+            "waiting": sum(1 for r in prev_rows if r["waiting"]),
             "unresolved": prev_unresolved,
             "avg_repair": round(sum(prev_repair) / len(prev_repair), 1) if prev_repair else None,
             "sla": prev_sla,
         }
 
-    # SLA přesčasy — závady které překročily 60 min
+    # SLA prescasy - zavady, ktere prekrocily 60 min.
     def _is_night_shift(row):
-        """Noční / večerní směna: nahlášeno v 18:00–05:59 → dlouhá doba opravy je očekávatelná."""
+        """Nocni / vecerni smena: nahlaseno v 18:00-05:59, delsi doba opravy je ocekavatelna."""
         dt = row.get("reported_at")
         if not dt:
             return False
@@ -225,6 +254,7 @@ def load_dashboard(days: str = "30", technology: str = "Vse", priority: str = "V
 
     sla_breaches = [
         {
+            "id": row["id"],
             "reported_at": row["reported_at_text"],
             "technology": row["technology"],
             "location": row["location"],
@@ -239,10 +269,11 @@ def load_dashboard(days: str = "30", technology: str = "Vse", priority: str = "V
     ]
     sla_breaches.sort(key=lambda r: r["over_by_min"], reverse=True)
 
-    # 1. Závady bez popis řešení — vyřešeno ale chybí popis řešení
+    # 1. Zavady bez popisu reseni.
     no_solution = sorted([
         {
             "reported_at": row["reported_at_text"],
+            "department": row["department"],
             "technology": row["technology"],
             "location": row["location"],
             "priority": row["priority"],
@@ -253,7 +284,7 @@ def load_dashboard(days: str = "30", technology: str = "Vse", priority: str = "V
         if row["solved"] and not str(row.get("solution", "")).strip()
     ], key=lambda x: x["reported_at"], reverse=True)
 
-    # 2. Průměrná doba reakce dle priority
+    # 2. Prumerna doba reakce dle priority.
     priority_response: dict = {}
     for row in rows:
         if row["response_min"] is not None:
@@ -267,11 +298,11 @@ def load_dashboard(days: str = "30", technology: str = "Vse", priority: str = "V
         for p, v in priority_response.items()
     ], key=lambda x: priority_order.get(x["priority"], 9))
 
-    # 3. Závady dle hodiny dne
+    # 3. Zavady dle hodiny dne.
     hourly = Counter(row["reported_at"].hour for row in rows if row["reported_at"])
     hourly_chart = [{"hour": h, "count": hourly.get(h, 0)} for h in range(24)]
 
-    # 4. Přehled podle technika (top 10 dle počtu závad)
+    # 4. Prehled podle technika.
     tech_data: dict = {}
     for row in rows:
         name = (row["reported_by"] or "").strip()
@@ -291,7 +322,7 @@ def load_dashboard(days: str = "30", technology: str = "Vse", priority: str = "V
         for name, d in tech_data.items()
     ], key=lambda x: x["count"], reverse=True)[:10]
 
-    # 5. Závady vrácené do řešení — stejné místo, nová závada do 24h od vyřešení předchozí
+    # 5. Zavady vratene do reseni - stejne misto do 24 h.
     loc_solved = defaultdict(list)
     for row in rows:
         if row["solved"] and row.get("solved_at") and row["location"] not in {"-", "AS", "AutoStore"}:
@@ -326,7 +357,7 @@ def load_dashboard(days: str = "30", technology: str = "Vse", priority: str = "V
             reopened.append(r)
     reopened = reopened[:20]
 
-    # Opakující se problémy — místa/technologie s 3+ závadami
+    # Opakujici se problemy - mista/technologie s 3+ zavadami.
     location_counts = Counter(row["location"] for row in rows if row["location"])
     tech_counts = Counter(row["technology"] for row in rows if row["technology"])
     recurring = [
@@ -354,10 +385,15 @@ def load_dashboard(days: str = "30", technology: str = "Vse", priority: str = "V
             "priority": row["priority"],
             "description": row["description"],
             "reported_by": row["reported_by"],
+            "technician": row["technician"],
             "status": row["status"],
             "reacted_at": row["reacted_at_text"],
             "solved_at": row["solved_at_text"],
             "solution": row["solution"],
+            "attachments": row["attachments"],
+            "reminded": row["reminded"],
+            "reminded_at": row["reminded_at_text"],
+            "reminded_by": row["reminded_by"],
             "hours_open": round((now - row["reported_at"]).total_seconds() / 3600, 1) if not row["solved"] and row["reported_at"] else None,
         }
         for row in rows
@@ -370,6 +406,7 @@ def load_dashboard(days: str = "30", technology: str = "Vse", priority: str = "V
             "total": total,
             "solved": solved,
             "in_progress": in_progress,
+            "waiting": waiting,
             "unresolved": unresolved,
             "solved_percent": round(solved / total * 100, 1) if total else 0,
             "avg_response": round(sum(response_values) / len(response_values), 1) if response_values else None,
@@ -395,7 +432,42 @@ def load_dashboard(days: str = "30", technology: str = "Vse", priority: str = "V
             "reopened": reopened,
         },
         "rows": table_rows,
-        # Otevřené = hours_open není None (= solved je False = prázdný Stav nebo V řešení)
+        # Otevrene = hours_open neni None.
         "in_progress_rows": [row for row in table_rows if row.get("hours_open") is not None and _normalize_text(str(row["status"])) in {"v reseni", "v rieseni", "reseni", "rieseni", "in progress", "in_progress"}],
+        "waiting_rows": [row for row in table_rows if row.get("hours_open") is not None and _normalize_text(str(row["status"])) in {"ceka", "ceka na servis", "ceka na dil", "waiting", "pending", "ordered"}],
         "unresolved_rows": [row for row in table_rows if row.get("hours_open") is not None],
     }
+
+
+def load_ticket_list(limit: int = 300):
+    now = datetime.now(PRAGUE_TZ)
+    rows = [_prepare_row(dict(row)) for row in list_ticket_records(limit=max(1, min(limit, 500)))]
+    rows = [row for row in rows if row["reported_at"]]
+    rows.sort(key=lambda row: row["reported_at"], reverse=True)
+    return {
+        "updated_at": now.strftime("%d.%m.%Y %H:%M"),
+        "rows": [
+            {
+                "id": row["id"],
+                "reported_at": row["reported_at_text"],
+                "department": row["department"],
+                "technology": row["technology"],
+                "location": row["location"],
+                "priority": row["priority"],
+                "description": row["description"],
+                "reported_by": row["reported_by"],
+                "technician": row["technician"],
+                "status": row["status"],
+                "reacted_at": row["reacted_at_text"],
+                "solved_at": row["solved_at_text"],
+                "solution": row["solution"],
+                "attachments": row["attachments"],
+                "reminded": row["reminded"],
+                "reminded_at": row["reminded_at_text"],
+                "reminded_by": row["reminded_by"],
+                "hours_open": round((now - row["reported_at"]).total_seconds() / 3600, 1) if not row["solved"] and row["reported_at"] else None,
+            }
+            for row in rows
+        ],
+    }
+

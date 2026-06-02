@@ -1,5 +1,11 @@
 import os
 
+emulator_host = os.getenv("FIRESTORE_EMULATOR_HOST", "")
+if emulator_host in {"127.0.0.1:9", "localhost:9"}:
+    os.environ.pop("FIRESTORE_EMULATOR_HOST", None)
+if os.getenv("FIRESTORE_COLLECTION", "").startswith("tickets_test_"):
+    os.environ["LOCAL_TEST_MODE"] = "1"
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -17,6 +23,15 @@ if os.getenv("CORS_ALLOWED_ORIGIN"):
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+
+@app.middleware("http")
+async def no_cache_for_frontend(request, call_next):
+    response = await call_next(request)
+    if not request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+    return response
 
 
 @app.get("/healthz")

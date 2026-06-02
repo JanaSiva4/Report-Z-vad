@@ -3,16 +3,22 @@ from fastapi import HTTPException
 
 from app.config import settings
 from app.models.tickets import TicketCreate
+from app.services.attachments import store_ticket_attachments
 from app.services.store import create_ticket_record, update_ticket
 
 
 def submit_ticket(ticket: TicketCreate) -> dict:
-    record = create_ticket_record(ticket.model_dump())
+    ticket_data = ticket.model_dump()
+    incoming_attachments = ticket_data.pop("attachments", [])
+    record = create_ticket_record({**ticket_data, "attachments": []})
+    stored_attachments = store_ticket_attachments(record["id"], incoming_attachments)
+    if stored_attachments:
+        update_ticket(record["id"], {"attachments": stored_attachments})
 
     if not settings.webhook_url:
-        return {"id": record["id"], "notification": "skipped"}
+        return {"id": record["id"], "attachments": stored_attachments, "notification": "skipped"}
 
-    payload = {**ticket.model_dump(), "ticket_id": record["id"]}
+    payload = {**ticket_data, "attachments": stored_attachments, "ticket_id": record["id"]}
     headers = {"X-API-Key": settings.webhook_api_key} if settings.webhook_api_key else None
     try:
         session = requests.Session()

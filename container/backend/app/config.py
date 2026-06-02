@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     dashboard_password: str = Field(default="", alias="DASHBOARD_PASSWORD")
     teams_reminder_webhook: str = Field(default="", alias="TEAMS_REMINDER_WEBHOOK")
     sheets_url: str = Field(default="", alias="SHEETS_URL")
+    firestore_collection: str = Field(default="tickets", alias="FIRESTORE_COLLECTION")
 
     model_config = SettingsConfigDict(env_file=("config.env", "../config.env"), extra="ignore")
 

@@ -66,11 +66,37 @@
         box-shadow: 0 12px 24px rgba(15, 118, 110, 0.14);
       }
       nav button {
+        position: relative;
         display: inline-flex;
         gap: 9px;
         align-items: center;
         justify-content: center;
         font-weight: 700;
+      }
+      .nav-badge {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        min-width: 24px;
+        height: 24px;
+        padding: 0 7px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transform: translateY(-50%);
+        background: #dc2626;
+        color: white;
+        font-size: 13px;
+        font-weight: 800;
+        line-height: 1;
+        box-shadow: 0 8px 16px rgba(220, 38, 38, 0.22);
+      }
+      .nav-badge.hidden { display: none; }
+      button.active .nav-badge {
+        background: #fff7ed;
+        color: #b91c1c;
+        box-shadow: 0 8px 16px rgba(255, 247, 237, 0.22);
       }
       button.active, .primary { background: #0f766e; border-color: #0f766e; color: white; }
       button.active:hover, .primary:hover { background: #115e59; border-color: #115e59; }
@@ -165,10 +191,20 @@
         font-size: 12px;
         font-weight: 800;
       }
+      .danger-inline {
+        color: #be123c;
+        background: #fff1f2;
+        border-color: #fecdd3;
+      }
+      .danger-inline:hover {
+        color: #9f1239;
+        background: #ffe4e6;
+        border-color: #fda4af;
+      }
       .muted { color: #667085; }
       body.dark .muted, body.dark .lead, body.dark .metric > span { color: #cbd5e1; }
-      .hidden { display: none; }
-      .metrics { display: grid; grid-template-columns: repeat(7, minmax(155px, 1fr)); gap: 14px; margin: 18px 0 8px; }
+      .hidden { display: none !important; }
+      .metrics { display: grid; grid-template-columns: repeat(8, minmax(145px, 1fr)); gap: 14px; margin: 18px 0 8px; }
       .metric {
         background: linear-gradient(180deg, #fff, #f8fafc);
         border: 1px solid #dfe6f1;
@@ -213,6 +249,9 @@
       .metric.progress { background: #fff7ed; border-color: #fed7aa; }
       .metric.progress .metric-icon { color: #c2410c; }
       .metric.progress strong { color: #c2410c; }
+      .metric.waiting { background: #f5f3ff; border-color: #ddd6fe; }
+      .metric.waiting .metric-icon { color: #6d28d9; }
+      .metric.waiting strong { color: #6d28d9; }
       .metric.response { background: #eff6ff; border-color: #bfdbfe; }
       .metric.response .metric-icon { color: #1d4ed8; }
       .metric.response strong { color: #1d4ed8; }
@@ -303,6 +342,87 @@
       .bar-fill.high { background: #dc2626; }
       .bar-fill.medium { background: #f59e0b; }
       .bar-fill.low { background: #22c55e; }
+      .recurring-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+      }
+      .recurring-item {
+        position: relative;
+        overflow: hidden;
+        min-height: 88px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        padding: 13px 14px 12px;
+        background: linear-gradient(180deg, #ffffff, #f8fafc);
+        box-shadow: 0 8px 18px rgba(23, 32, 51, 0.04);
+      }
+      .recurring-item::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 5px;
+        background: var(--accent);
+      }
+      .recurring-item[data-type="Místo"] {
+        background: linear-gradient(180deg, #fff7f7, #fff);
+        border-color: #fecaca;
+      }
+      .recurring-item[data-type="Technologie"] {
+        background: linear-gradient(180deg, #fffbeb, #fff);
+        border-color: #fde68a;
+      }
+      .recurring-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 7px;
+      }
+      .recurring-type {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        min-height: 24px;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.72);
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 800;
+      }
+      .recurring-count {
+        color: var(--accent);
+        font-size: 19px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+      .recurring-name {
+        color: #172033;
+        font-size: 15px;
+        font-weight: 800;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+      }
+      .recurring-mini-track {
+        height: 7px;
+        margin-top: 10px;
+        border-radius: 999px;
+        background: #edf1f7;
+        overflow: hidden;
+      }
+      .recurring-mini-fill {
+        height: 100%;
+        width: var(--width);
+        border-radius: inherit;
+        background: var(--accent);
+      }
+      body.dark .recurring-item {
+        background: #1f2937;
+        border-color: #334155;
+      }
+      body.dark .recurring-name { color: #e5edf5; }
+      body.dark .recurring-type { background: rgba(15, 23, 42, 0.55); color: #cbd5e1; }
       .line-chart {
         height: 190px;
         display: flex;
@@ -354,6 +474,18 @@
       .remind-btn { min-height: 28px; padding: 0 10px; font-size: 12px; font-weight: 700; background: #fff7ed; border-color: #fed7aa; color: #c2410c; white-space: nowrap; }
       .remind-btn:disabled { opacity: 0.5; cursor: not-allowed; }
       .remind-btn.sent { background: #f0fdf4; border-color: #bbf7d0; color: #15803d; }
+      .reminded-flag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 22px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #fef3c7;
+        color: #92400e;
+        font-size: 11px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
       .overdue-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; background: #fee2e2; color: #991b1b; white-space: nowrap; }
       .status-badge {
         display: inline-flex;
@@ -368,6 +500,7 @@
       .status-badge.solved { background: #dcfce7; color: #166534; }
       .status-badge.unresolved { background: #ffe4e6; color: #9f1239; }
       .status-badge.progress { background: #ffedd5; color: #9a3412; }
+      .status-badge.waiting { background: #ede9fe; color: #5b21b6; }
       .priority-badge {
         display: inline-flex;
         align-items: center;
@@ -430,19 +563,152 @@
         z-index: 1;
         background: #f8fafc;
       }
+      .ticket-board {
+        display: grid;
+        gap: 16px;
+      }
+      .ticket-board-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .ticket-filters {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .ticket-filters button {
+        min-height: 36px;
+        padding: 0 14px;
+        font-weight: 800;
+      }
+      .ticket-filters button.active {
+        background: #0f766e;
+        border-color: #0f766e;
+        color: white;
+      }
+      .ticket-action-cell {
+        min-width: 88px;
+      }
+      .ticket-action-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        padding: 12px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+      }
+      .ticket-action-grid textarea {
+        grid-column: 1 / -1;
+        min-height: 54px;
+        padding: 9px;
+        font-size: 12px;
+      }
+      .ticket-action-grid input {
+        grid-column: 1 / -1;
+        padding: 9px;
+        font-size: 12px;
+      }
+      .attachment-list {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        padding: 10px;
+        border: 1px solid #dbeafe;
+        border-radius: 8px;
+        background: #eff6ff;
+        font-size: 12px;
+      }
+      .attachment-list strong {
+        color: #1e40af;
+        margin-right: 4px;
+      }
+      .attachment-list a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #fff;
+        border: 1px solid #bfdbfe;
+        color: #1d4ed8;
+        font-weight: 800;
+        text-decoration: none;
+      }
+      .attachment-preview {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        width: 180px;
+        padding: 8px;
+        border: 1px solid #bfdbfe;
+        border-radius: 10px;
+        background: #fff;
+      }
+      .attachment-preview a {
+        display: block;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        text-decoration: none;
+      }
+      .attachment-preview img {
+        display: block;
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid #dbeafe;
+        background: #f8fafc;
+      }
+      .attachment-preview small {
+        color: #475569;
+        font-weight: 700;
+        line-height: 1.2;
+        word-break: break-word;
+      }
+      .ticket-action-grid button {
+        min-height: 34px;
+        font-size: 12px;
+        font-weight: 900;
+      }
+      .ticket-open-action {
+        min-height: 32px;
+        padding: 0 12px;
+        font-size: 12px;
+        font-weight: 900;
+      }
+      .ticket-detail-row td {
+        padding: 0 10px 12px;
+        background: #f8fafc;
+      }
+      body.dark .ticket-action-grid, body.dark .ticket-detail-row td {
+        background: #111827;
+        border-color: #334155;
+      }
       body.dark .table-scroll thead th { background: #111827; }
       body.dark th, body.dark td { border-bottom-color: #334155; }
       body.dark tr.row-solved { background: rgba(22, 101, 52, 0.22); }
       body.dark tr.row-unresolved { background: rgba(159, 18, 57, 0.2); }
       body.dark tr.row-progress { background: rgba(154, 52, 18, 0.22); }
+      body.dark tr.row-waiting { background: rgba(91, 33, 182, 0.22); }
       tr.row-solved { background: #f0fdf4; }
       tr.row-unresolved { background: #fff1f2; }
       tr.row-progress { background: #fff7ed; }
+      tr.row-waiting { background: #f5f3ff; }
       tr.row-solved td { border-bottom-color: #dcfce7; }
       tr.row-unresolved td { border-bottom-color: #ffe4e6; }
       tr.row-progress td { border-bottom-color: #ffedd5; }
+      tr.row-waiting td { border-bottom-color: #ede9fe; }
       tr.row-system-stop { background: #fefce8 !important; border-left: 3px solid #f59e0b; }
       tr.row-system-stop td { border-bottom-color: #fde68a; }
+      tr.row-reminded { box-shadow: inset 4px 0 0 #f59e0b; }
+      tr.row-reminded td { background-image: linear-gradient(90deg, rgba(251,191,36,0.14), rgba(251,191,36,0)); }
       body.dark tr.row-system-stop { background: rgba(202, 138, 4, 0.2) !important; }
       @media (max-width: 760px) {
         .grid, .toolbar, .metrics, nav, .dashboard-grid, .dashboard-grid.three { grid-template-columns: 1fr; }
@@ -455,8 +721,9 @@
   </head>
   <body>
     <main>
-      <nav style="grid-template-columns:1fr 1fr 1fr;max-width:780px">
-        <button id="formTab" class="active"><span class="tab-icon" data-icon="file"></span>Formular</button>
+      <nav style="grid-template-columns:1fr 1fr 1fr 1fr;max-width:980px">
+        <button id="formTab" class="active"><span class="tab-icon" data-icon="file"></span>Report Issue</button>
+        <button id="ticketsTab"><span class="tab-icon" data-icon="list"></span>Závady<span id="ticketsBadge" class="nav-badge hidden">0</span></button>
         <button id="dashboardTab"><span class="tab-icon" data-icon="chart"></span>Power BI Dashboard</button>
         <button id="managerTab"><span class="tab-icon" data-icon="target"></span>Pro vedoucího</button>
       </nav>
@@ -466,8 +733,8 @@
 
       <section id="formView" class="panel">
         <div class="title-icon" data-icon="tools"></div>
-        <h1>Technical Fault Report</h1>
-        <p class="lead">Please fill in the technical details of the issue. The information will be immediately sent for resolution.</p>
+        <h1>Report a Technical Issue</h1>
+        <p class="lead">Please fill in the details about the issue. Once submitted, it will be saved and assigned to a technician for resolution.</p>
         <form id="ticketForm">
           <label><span class="field-title"><span class="field-icon" data-icon="user"></span>Reported by <span class="required-mark">*</span></span><input name="reported_by" required /></label>
           <div class="grid">
@@ -475,25 +742,26 @@
             <label><span class="field-title"><span class="field-icon" data-icon="cpu"></span>2. Technology <span class="required-mark">*</span></span><select name="technology" required></select></label>
           </div>
           <div id="customFields" class="grid hidden">
-            <label id="customDepartmentLabel" class="hidden"><span class="field-title"><span class="field-icon" data-icon="edit"></span>Enter department / Zadejte oddělení</span><input name="department_custom" /></label>
-            <label id="customTechnologyLabel" class="hidden"><span class="field-title"><span class="field-icon" data-icon="edit"></span>Enter technology / Zadejte technologii</span><input name="technology_custom" /></label>
+            <label id="customDepartmentLabel" class="hidden"><span class="field-title"><span class="field-icon" data-icon="edit"></span>Enter department</span><input name="department_custom" /></label>
+            <label id="customTechnologyLabel" class="hidden"><span class="field-title"><span class="field-icon" data-icon="edit"></span>Enter technology</span><input name="technology_custom" /></label>
           </div>
           <div class="grid">
             <label><span class="field-title"><span class="field-icon" data-icon="map"></span>3. Location <span class="required-mark">*</span></span><input name="location" required /></label>
             <label><span class="field-title"><span class="field-icon" data-icon="flag"></span>4. Priority</span><select name="priority"></select></label>
           </div>
-          <label><span class="field-title"><span class="field-icon" data-icon="message"></span>Detailed fault description <span class="required-mark">*</span></span><textarea name="description" rows="7" required></textarea></label>
+          <label><span class="field-title"><span class="field-icon" data-icon="message"></span>Detailed description of the issue <span class="required-mark">*</span></span><textarea name="description" rows="7" required></textarea></label>
           <label><span class="field-title"><span class="field-icon" data-icon="note"></span>Additional note</span><textarea name="note" rows="3"></textarea></label>
-          <label><span class="field-title"><span class="field-icon" data-icon="paperclip"></span>Attachments</span><input name="attachments" type="file" multiple accept=".jpg,.jpeg,.png,.pdf" /></label>
+          <label><span class="field-title"><span class="field-icon" data-icon="paperclip"></span>Přílohy</span><input name="attachments" type="file" multiple accept=".jpg,.jpeg,.png,.pdf" /></label>
+          <p class="muted" style="margin:6px 0 0;font-size:12px">Povolené formáty: JPG, PNG a PDF. Max. velikost jednoho souboru je 10 MB.</p>
           <div id="filePreview" class="file-preview"></div>
-          <button id="submitTicket" class="primary" type="submit"><span class="tab-icon" data-icon="send"></span>SUBMIT REPORT</button>
+          <button id="submitTicket" class="primary" type="submit"><span class="tab-icon" data-icon="send"></span>Submit issue</button>
         </form>
         <p id="formStatus" class="status hidden"></p>
         <section id="ticketSuccess" class="success-screen hidden">
           <div class="success-icon" data-icon="check"></div>
-          <h2>Ticket byl odeslán</h2>
-          <p>Závada byla předána do navazného workflow. Můžete zadat další ticket, pokud potřebujete nahlásit ještě něco dalšího.</p>
-          <button id="newTicket" class="primary" type="button"><span class="tab-icon" data-icon="file"></span>Odeslat nový ticket</button>
+          <h2>Ticket submitted</h2>
+          <p>Your issue has been saved and will be assigned to a technician. Only submit a new ticket if you need to report a separate new issue.</p>
+          <button id="newTicket" class="primary" type="button"><span class="tab-icon" data-icon="file"></span>Submit new ticket</button>
         </section>
       </section>
 
@@ -533,12 +801,12 @@
           </section>
 
           <section class="card" id="comparisonSection">
-            <h3>📈 Srovnání s předchozím obdobím</h3>
-            <div id="comparisonCards" class="metrics" style="grid-template-columns:repeat(5,minmax(140px,1fr))"></div>
+            <h3> Srovnání s předchozím obdobím</h3>
+            <div id="comparisonCards" class="metrics" style="grid-template-columns:repeat(7,minmax(140px,1fr))"></div>
           </section>
 
           <section class="card">
-            <h3>🔁 Opakující se problémy (3+ závad)</h3>
+            <h3> Opakující se problémy (3+ závad)</h3>
             <p class="muted" style="font-size:13px">Místa a technologie s nejvíce opakujícími se poruchami ve zvoleném období.</p>
             <div id="recurringList"></div>
           </section>
@@ -549,7 +817,7 @@
           </section>
 
           <section class="card" id="hourlySection">
-            <h3>🕐 Závady dle hodiny dne</h3>
+            <h3> Závady dle hodiny dne</h3>
             <p style="margin:0 0 8px;font-size:13px;color:#667085">Kdy během dne vzniká nejvíce závad. 🟢 = denní směna &nbsp;🟣 = noční / večerní (18–06 h)</p>
             <div id="hourlyChart" style="display:flex;align-items:flex-end;gap:3px;height:110px;padding:0 4px"></div>
           </section>
@@ -562,7 +830,7 @@
           </section>
 
           <section class="card hidden" id="reopenedSection">
-            <h3>🔁 Opakovaná závada na stejném místě (do 24 h)</h3>
+            <h3> Opakovaná závada na stejném místě (do 24 h)</h3>
             <p style="margin:0 0 8px;font-size:13px;color:#667085">Závady nahlášené na místě, kde byla předchozí závada vyřešena méně než 24 hodin předtím — možná neúplná oprava.</p>
             <div class="table-tools"><span id="reopenedCount" class="row-count"></span></div>
             <div class="table-scroll resizable"><table id="reopenedTable"></table></div>
@@ -581,6 +849,32 @@
             <div class="table-tools"><span id="slaBreachCount" class="row-count"></span></div>
             <div class="table-scroll resizable"><table id="slaBreachTable"></table></div>
           </section>
+        </section>
+      </section>
+      <section id="ticketsView" class="hidden">
+        <section class="panel ticket-board">
+          <div class="ticket-board-head">
+            <div>
+              <h1 style="text-align:left">Závady</h1>
+              <p class="muted" style="margin:0">Tady se závady přebírají, řeší a uzavírají přímo v aplikaci.</p>
+            </div>
+            <div class="dashboard-actions">
+              <button id="refreshTickets" class="refresh-button" type="button">Obnovit</button>
+            </div>
+          </div>
+          <div class="ticket-filters">
+            <button class="active" data-ticket-filter="open" type="button">Otevřené</button>
+            <button data-ticket-filter="progress" type="button">V řešení</button>
+            <button data-ticket-filter="waiting" type="button">Čeká</button>
+            <button data-ticket-filter="solved" type="button">Vyřešené</button>
+            <button data-ticket-filter="all" type="button">Vše</button>
+          </div>
+          <div class="table-tools">
+            <input id="ticketsSearch" placeholder="Hledat závadu, místo, technologii nebo jméno..." />
+            <span id="ticketsCount" class="row-count"></span>
+          </div>
+          <div class="table-scroll resizable" style="height:520px"><table id="ticketsTable"></table></div>
+          <p id="ticketsStatus" class="status hidden"></p>
         </section>
       </section>
       <section id="dashboardView" class="hidden">
@@ -602,8 +896,12 @@
             <div id="metrics" class="metrics"></div>
           </div>
           <section id="inProgressPanel" class="card hidden">
-            <h3>Závady V řešení – čeká na servis / díl</h3>
+            <h3>Závady V řešení</h3>
             <div class="table-scroll"><table id="inProgressRows"></table></div>
+          </section>
+          <section id="waitingPanel" class="card hidden">
+            <h3>Závady Čeká - servis / díl / dodavatel</h3>
+            <div class="table-scroll"><table id="waitingRows"></table></div>
           </section>
           <div class="dashboard-grid">
             <section class="card chart-card">
@@ -646,7 +944,7 @@
             </div>
             <div class="table-tools">
               <span id="overdueCount" class="row-count"></span>
-              <span class="muted" style="font-size:12px">Kliknutím na Připomenout odešleš zprávu do Teams kanálu Hlášení závad LC4</span>
+              <span class="muted" style="font-size:12px">Kliknutím na Připomenout se závada interně označí jako urgentní.</span>
             </div>
             <div class="table-scroll resizable"><table id="overdueRows"></table></div>
           </section>
@@ -690,9 +988,11 @@
     </main>
     <script>
       const formTab = document.getElementById("formTab");
+      const ticketsTab = document.getElementById("ticketsTab");
       const dashboardTab = document.getElementById("dashboardTab");
       const managerTab = document.getElementById("managerTab");
       const formView = document.getElementById("formView");
+      const ticketsView = document.getElementById("ticketsView");
       const dashboardView = document.getElementById("dashboardView");
       const managerView = document.getElementById("managerView");
       const formStatus = document.getElementById("formStatus");
@@ -700,6 +1000,9 @@
       const ticketSuccess = document.getElementById("ticketSuccess");
       let dashboardRows = [];
       let unresolvedRows = [];
+      let ticketsLoaded = false;
+      let ticketFilter = "open";
+      let expandedTicketId = "";
       let activeTableFilter = "";
       let managerPassword = "";
       const maxAttachmentSize = 10 * 1024 * 1024;
@@ -713,13 +1016,19 @@
 
       function show(view) {
         formView.classList.toggle("hidden", view !== "form");
+        ticketsView.classList.toggle("hidden", view !== "tickets");
         dashboardView.classList.toggle("hidden", view !== "dashboard");
         managerView.classList.toggle("hidden", view !== "manager");
         formTab.classList.toggle("active", view === "form");
+        ticketsTab.classList.toggle("active", view === "tickets");
         dashboardTab.classList.toggle("active", view === "dashboard");
         managerTab.classList.toggle("active", view === "manager");
       }
       formTab.onclick = () => show("form");
+      ticketsTab.onclick = () => {
+        show("tickets");
+        if (!ticketsLoaded) { ticketsLoaded = true; loadTickets(); }
+      };
       dashboardTab.onclick = () => {
         show("dashboard");
         if (!dashboardLoaded) { dashboardLoaded = true; loadDashboard(); startAutoRefresh(); }
@@ -732,6 +1041,21 @@
         fillSelect("department", options.departments);
         fillSelect("technology", options.technologies);
         fillSelect("priority", options.priorities, "Medium");
+      }
+
+      async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          return await fetch(url, { ...options, signal: controller.signal });
+        } catch (error) {
+          if (error.name === "AbortError") {
+            throw new Error("Data se teď nepodařilo načíst. Lokální připojení ke Google Cloud čeká moc dlouho.");
+          }
+          throw error;
+        } finally {
+          window.clearTimeout(timeoutId);
+        }
       }
 
       function fillSelect(name, values, selected = "") {
@@ -761,6 +1085,13 @@
         formStatus.className = `status-box${isError ? " error" : ""}`;
       }
 
+      function setTicketsStatus(message, isError = false) {
+        const status = document.getElementById("ticketsStatus");
+        status.textContent = message;
+        status.className = `status-box${isError ? " error" : ""}`;
+        if (!message) status.classList.add("hidden");
+      }
+
       function updateFilePreview() {
         const preview = document.getElementById("filePreview");
         const input = document.querySelector('[name="attachments"]');
@@ -769,7 +1100,7 @@
         if (invalid) {
           input.value = "";
           preview.innerHTML = "";
-          setFormStatus(`Soubor ${invalid.name} nejde prilozit. Povolen je JPG, PNG nebo PDF do 10 MB.`, true);
+          setFormStatus(`File ${invalid.name} cannot be attached. Only JPG, PNG or PDF files up to 10 MB are allowed.`, true);
           return;
         }
         preview.innerHTML = files.map((file) => `<span class="file-chip">${file.name} (${formatFileSize(file.size)})</span>`).join("");
@@ -784,14 +1115,14 @@
         const buffer = await file.arrayBuffer();
         let binary = "";
         new Uint8Array(buffer).forEach((byte) => binary += String.fromCharCode(byte));
-        return btoa(binary);
+        return `data:${file.type || "application/octet-stream"};base64,${btoa(binary)}`;
       }
 
       ticketForm.onsubmit = async (event) => {
         event.preventDefault();
         const form = new FormData(event.target);
         const submitButton = document.getElementById("submitTicket");
-        setFormStatus("Odesílám ticket...", false);
+        setFormStatus("Submitting ticket...", false);
         submitButton.disabled = true;
         const attachments = await Promise.all([...event.target.attachments.files].map(async (file) => ({
           name: file.name,
@@ -803,30 +1134,295 @@
         delete payload.department_custom;
         delete payload.technology_custom;
         payload.attachments = attachments;
-        const response = await fetch("/api/tickets", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        submitButton.disabled = false;
-        if (response.ok) {
-          event.target.reset();
-          document.getElementById("filePreview").innerHTML = "";
-          formStatus.classList.add("hidden");
-          ticketForm.classList.add("hidden");
-          ticketSuccess.classList.remove("hidden");
-        } else {
-          setFormStatus("Nepodařilo se odeslat. Zkontrolujte VPN.", true);
+        try {
+          const controller = new AbortController();
+          const timeoutId = window.setTimeout(() => controller.abort(), 20000);
+          let response;
+          try {
+            response = await fetch("/api/tickets", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+              signal: controller.signal,
+            });
+          } finally {
+            window.clearTimeout(timeoutId);
+          }
+          if (response.ok) {
+            event.target.reset();
+            document.getElementById("filePreview").innerHTML = "";
+            formStatus.classList.add("hidden");
+            ticketForm.classList.add("hidden");
+            ticketSuccess.classList.remove("hidden");
+            await refreshTicketsBadge();
+          } else {
+            const err = await response.json().catch(() => ({}));
+            setFormStatus(err.detail || "Submission failed. Please check your VPN connection and try again.", true);
+          }
+        } catch (error) {
+          setFormStatus(
+            error.name === "AbortError"
+              ? "Submission timed out. Please check your VPN and try again."
+              : "Submission failed: " + error.message,
+            true
+          );
+        } finally {
+          submitButton.disabled = false;
         }
       };
 
       let dashboardLoaded = false;
 
+      async function fetchDashboardData(days = "all") {
+        const query = new URLSearchParams({ days, technology: "Vse", priority: "Vse" });
+        const response = await fetchWithTimeout(`/api/dashboard?${query}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Data se nepodařilo načíst.");
+        dashboardRows = data.rows;
+        unresolvedRows = data.unresolved_rows;
+        updateTicketsBadge();
+        return data;
+      }
+
+      async function loadTickets() {
+        setTicketsStatus("Načítám závady...");
+        try {
+          const response = await fetchWithTimeout("/api/tickets?limit=300");
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.detail || "Závady se nepodařilo načíst.");
+          dashboardRows = data.rows;
+          updateTicketsBadge();
+          renderTickets();
+          setTicketsStatus("");
+        } catch (error) {
+          setTicketsStatus(error.message, true);
+        }
+      }
+
+      function isSolvedTicket(row) {
+        const status = normalizedStatus(row);
+        return status.includes("vyreseno") || status.includes("vyaeeno");
+      }
+
+      function isProgressTicket(row) {
+        const status = normalizedStatus(row);
+        return status.includes("reseni") || status.includes("aeeni");
+      }
+
+      function isWaitingTicket(row) {
+        const status = normalizedStatus(row);
+        return status.includes("ceka") || status.includes("waiting") || status.includes("pending") || status.includes("ordered");
+      }
+
+      function normalizedStatus(row) {
+        return String(row.status || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replaceAll("č", "c")
+          .replaceAll("å™", "r")
+          .replaceAll("å¡", "s")
+          .replaceAll("ã­", "i")
+          .replaceAll("ä", "c");
+      }
+
+      function ticketMatchesFilter(row) {
+        if (ticketFilter === "all") return true;
+        if (ticketFilter === "solved") return isSolvedTicket(row);
+        if (ticketFilter === "progress") return !isSolvedTicket(row) && isProgressTicket(row);
+        if (ticketFilter === "waiting") return !isSolvedTicket(row) && isWaitingTicket(row);
+        return !isSolvedTicket(row) && !isProgressTicket(row) && !isWaitingTicket(row);
+      }
+
+      function newTicketCount(rows = dashboardRows) {
+        return rows.filter((row) => !isSolvedTicket(row) && !isProgressTicket(row) && !isWaitingTicket(row)).length;
+      }
+
+      function updateTicketsBadge(rows = dashboardRows) {
+        const badge = document.getElementById("ticketsBadge");
+        const count = newTicketCount(rows);
+        badge.textContent = count > 99 ? "99+" : String(count);
+        badge.classList.toggle("hidden", count === 0);
+        ticketsTab.title = count ? `${count} nových otevřených závad` : "Žádná nová otevřená závada";
+      }
+
+      async function refreshTicketsBadge() {
+        try {
+          const response = await fetchWithTimeout("/api/tickets?limit=300", {}, 8000);
+          const data = await response.json();
+          if (!response.ok) return;
+          updateTicketsBadge(data.rows || []);
+          if (ticketsLoaded) {
+            dashboardRows = data.rows || [];
+            renderTickets();
+          }
+        } catch {
+          // Badge is helpful, but it should never block ticket submission.
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value || "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      function renderTickets() {
+        const query = document.getElementById("ticketsSearch").value.trim().toLowerCase();
+        const rows = dashboardRows
+          .filter(ticketMatchesFilter)
+          .filter((row) => matchesSearch(row, query));
+        document.getElementById("ticketsCount").textContent = `${rows.length} závad`;
+        const el = document.getElementById("ticketsTable");
+        if (!rows.length) {
+          el.innerHTML = `<tbody><tr><td class="empty-state" colspan="10">Žádné závady pro tento filtr.</td></tr></tbody>`;
+          return;
+        }
+        el.innerHTML = "<thead><tr><th>Čas</th><th>Oddělení</th><th>Technologie</th><th>Místo</th><th>Priorita</th><th>Popis</th><th>Nahlásil</th><th>Stav</th><th>Časy</th><th>Akce</th></tr></thead><tbody>" +
+          rows.slice(0, 200).map((row, idx) => {
+            const solved = isSolvedTicket(row);
+            const progress = isProgressTicket(row);
+            const waiting = isWaitingTicket(row);
+            const safeSolution = escapeHtml(row.solution);
+            const isExpanded = expandedTicketId === row.id;
+            const attachments = renderTicketAttachments(row);
+            const statusButtons = solved ? "" : [
+              !progress && !waiting ? `<button type="button" data-ticket-status="V řešení" data-ticket-id="${escapeHtml(row.id)}" data-ticket-index="${idx}">Převzít</button>` : "",
+              !waiting ? `<button type="button" data-ticket-status="Čeká" data-ticket-id="${escapeHtml(row.id)}" data-ticket-index="${idx}">Čeká</button>` : "",
+              `<button class="primary" type="button" data-ticket-status="Vyřešeno" data-ticket-id="${escapeHtml(row.id)}" data-ticket-index="${idx}">Vyřešit</button>`
+            ].join("");
+            const deleteButton = `<button class="danger-inline" type="button" data-ticket-delete="${escapeHtml(row.id)}">Smazat závadu</button>`;
+            const actionButtons = `${statusButtons}${solved ? `<span class="muted">Závada je uzavřená.</span>` : ""}${deleteButton}`;
+            return `<tr class="${rowClass(row)}">
+              <td>${row.reported_at}</td>
+              <td>${escapeHtml(row.department || "-")}</td>
+              <td>${escapeHtml(row.technology)}</td>
+              <td>${escapeHtml(row.location)}</td>
+              <td>${priorityBadge(row.priority)}</td>
+              <td class="col-popis" title="${escapeHtml(row.description)}">${escapeHtml(row.description)}</td>
+              <td>${escapeHtml(row.reported_by)}</td>
+              <td>${statusBadge(row)}</td>
+              <td><small>Reakce: ${row.reacted_at || "-"}<br>Vyřešeno: ${row.solved_at || "-"}</small></td>
+              <td class="ticket-action-cell">
+                <button class="ticket-open-action" type="button" data-ticket-toggle="${escapeHtml(row.id)}">${isExpanded ? "zavřít" : "řešit"}</button>
+              </td>
+            </tr>
+            <tr class="ticket-detail-row ${isExpanded ? "" : "hidden"}">
+              <td colspan="10">
+                <div class="ticket-action-grid">
+                  <input id="tech-${idx}" placeholder="Technik / jméno" value="${escapeHtml(row.technician)}" ${solved ? "disabled" : ""} />
+                  <textarea id="solution-${idx}" placeholder="Popis řešení nebo poznámka..." ${solved ? "disabled" : ""}>${safeSolution}</textarea>
+                  ${attachments}
+                  ${actionButtons}
+                </div>
+              </td>
+            </tr>`;
+          }).join("") + "</tbody>";
+      }
+
+      function renderTicketAttachments(row) {
+        const attachments = Array.isArray(row.attachments) ? row.attachments : [];
+        if (!attachments.length) return "";
+        return `<div class="attachment-list"><strong>Přílohy</strong>${attachments.map((item, index) => {
+          const name = escapeHtml(item.name || `Příloha ${index + 1}`);
+          const size = item.size ? ` (${formatFileSize(item.size)})` : "";
+          const url = `/api/tickets/${encodeURIComponent(row.id)}/attachments/${index}`;
+          const type = String(item.content_type || item.mime_type || "").toLowerCase();
+          if (type.startsWith("image/")) {
+            return `<div class="attachment-preview">
+              <a href="${url}" target="_blank" rel="noopener" title="Otevřít obrázek v novém okně">
+                <img src="${url}" alt="${name}">
+              </a>
+              <small>${name}${size}</small>
+            </div>`;
+          }
+          return `<a href="${url}" target="_blank" rel="noopener">${name}${size}</a>`;
+        }).join("")}</div>`;
+      }
+
+      async function updateTicketStatus(ticketId, status, idx) {
+        const solution = document.getElementById(`solution-${idx}`)?.value || "";
+        const technician = document.getElementById(`tech-${idx}`)?.value || "";
+        if (status === "Vyřešeno" && !solution.trim()) {
+          setTicketsStatus("Před vyřešením doplňte krátký popis řešení.", true);
+          return;
+        }
+        setTicketsStatus("Ukládám změnu...");
+        const response = await fetch(`/api/tickets/${ticketId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status, solution, technician })
+        });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          setTicketsStatus(data.detail || "Změnu se nepodařilo uložit.", true);
+          return;
+        }
+        await loadTickets();
+        if (dashboardLoaded) await loadDashboard();
+      }
+
+      async function deleteTicket(ticketId) {
+        const confirmed = window.confirm("Opravdu smazat tuto závadu? Tohle nejde vrátit zpět.");
+        if (!confirmed) return;
+        setTicketsStatus("Mažu závadu...");
+        const response = await fetch(`/api/tickets/${encodeURIComponent(ticketId)}`, { method: "DELETE" });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          setTicketsStatus(data.detail || "Závadu se nepodařilo smazat.", true);
+          return;
+        }
+        if (expandedTicketId === ticketId) expandedTicketId = "";
+        await loadTickets();
+        if (dashboardLoaded) await loadDashboard();
+      }
+
+      function toggleTicketDetail(ticketId) {
+        expandedTicketId = expandedTicketId === ticketId ? "" : ticketId;
+        renderTickets();
+        setTicketsStatus(expandedTicketId ? "Detail závady je otevřený." : "");
+      }
       document.getElementById("refreshDashboard").onclick = () => {
         loadDashboard();
       };
 
       document.getElementById("themeToggle").onclick = () => setTheme(!document.body.classList.contains("dark"));
+
+
+      function emptyDashboardData(message = "") {
+        return {
+          updated_at: "testovací režim",
+          filters: { technologies: [] },
+          metrics: {
+            total: 0,
+            solved: 0,
+            solved_percent: 0,
+            unresolved: 0,
+            in_progress: 0,
+            waiting: 0,
+            avg_response: null,
+            avg_repair: null,
+            sla: 0
+          },
+          charts: {
+            daily: [],
+            technology: [],
+            weekday: ["Po", "Ut", "St", "Ct", "Pa", "So", "Ne"].map((name) => ({ name, count: 0 })),
+            priority: [],
+            department: [],
+            location: []
+          },
+          rows: [],
+          unresolved_rows: [],
+          in_progress_rows: [],
+          waiting_rows: [],
+          overdue_rows: [],
+          message: message || "Testovací režim bez historických dat."
+        };
+      }
 
       async function loadDashboard() {
         const panel = document.getElementById("dashboardPanel");
@@ -840,18 +1436,17 @@
         });
         let data;
         try {
-          const response = await fetch(`/api/dashboard?${query}`);
+          const response = await fetchWithTimeout(`/api/dashboard?${query}`, {}, 6000);
           data = await response.json();
           if (!response.ok) throw new Error(data.detail || "Data se nepodařilo načíst.");
         } catch (error) {
-          updated.textContent = error.message;
-          panel.classList.remove("loading");
-          return;
+          data = emptyDashboardData(error.message);
         }
-        updated.textContent = `Aktualizováno ${data.updated_at}`;
+        updated.textContent = data.message ? data.message : `Aktualizováno ${data.updated_at}`;
         document.title = `(${data.metrics.unresolved} nevyřešeno) Maintenance Helpdesk CZLC4`;
         dashboardRows = data.rows;
         unresolvedRows = data.unresolved_rows;
+        updateTicketsBadge();
         document.getElementById("insight").textContent = buildInsight(data);
         const tech = document.getElementById("technology");
         if (tech.options.length === 1) {
@@ -867,6 +1462,7 @@
           ["solved", `Vyřešeno (${data.metrics.solved_percent} %)`, data.metrics.solved, "check", "solved"],
           ["unresolved", "Nevyřešeno", data.metrics.unresolved, "alert", "unresolved"],
           ["progress", "V řešení", data.metrics.in_progress, "wrench", "progress"],
+          ["waiting", "Čeká", data.metrics.waiting || 0, "clock", "waiting"],
           ["response", "Prům. reakce", data.metrics.avg_response === null ? "-" : `${data.metrics.avg_response} min`, "zap"],
           ["response", "Prům. oprava", data.metrics.avg_repair === null ? "-" : `${data.metrics.avg_repair} min`, "clock"],
           ["sla", "SLA <60 min (vyřešeno)", `${data.metrics.sla} %`, "target"]
@@ -877,6 +1473,12 @@
             applyTableFilters();
             if (activeTableFilter === "progress") {
               document.getElementById("inProgressPanel").classList.remove("hidden");
+              document.getElementById("waitingPanel").classList.add("hidden");
+              return;
+            }
+            if (activeTableFilter === "waiting") {
+              document.getElementById("waitingPanel").classList.remove("hidden");
+              document.getElementById("inProgressPanel").classList.add("hidden");
               return;
             }
             if (activeTableFilter === "unresolved") {
@@ -886,9 +1488,14 @@
           };
         });
         document.querySelectorAll(".metric")[3].innerHTML += '<button class="detail-toggle" id="toggleInProgress">detail</button>';
+        document.querySelectorAll(".metric")[4].innerHTML += '<button class="detail-toggle" id="toggleWaiting">detail</button>';
         document.getElementById("toggleInProgress").onclick = (event) => {
           event.stopPropagation();
           document.getElementById("inProgressPanel").classList.toggle("hidden");
+        };
+        document.getElementById("toggleWaiting").onclick = (event) => {
+          event.stopPropagation();
+          document.getElementById("waitingPanel").classList.toggle("hidden");
         };
         renderLineChart("dailyChart", data.charts.daily);
         renderBarList("technologyChart", data.charts.technology);
@@ -897,6 +1504,7 @@
         renderBarList("departmentChart", data.charts.department);
         renderBarList("locationChart", data.charts.location);
         renderTable("inProgressRows", data.in_progress_rows);
+        renderTable("waitingRows", data.waiting_rows || []);
         applyTableFilters();
         panel.classList.remove("loading");
       }
@@ -928,6 +1536,7 @@
       function uiIcon(name) {
         const icons = {
           file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3h8l4 4v14H6V3Z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>',
+          list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>',
           chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5M12 16V8M16 16v-8"/></svg>',
           user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
           building: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 21V5l8-3 8 3v16"/><path d="M9 21v-6h6v6"/><path d="M8 8h.01M12 8h.01M16 8h.01M8 12h.01M16 12h.01"/></svg>',
@@ -979,8 +1588,8 @@
           document.getElementById(id).innerHTML = `<tbody><tr><td class="empty-state" colspan="10">Pro tento filtr nejsou žádné závady.</td></tr></tbody>`;
           return;
         }
-        document.getElementById(id).innerHTML = "<thead><tr><th>Čas</th><th>Technologie</th><th>Místo</th><th>Priorita</th><th>Popis</th><th>Nahlásil</th><th>Stav</th><th>Reakce</th><th>Vyřešeno</th><th>Popis řešení</th></tr></thead><tbody>" +
-          rows.slice(0, 100).map((row) => `<tr class="${rowClass(row)}"><td>${row.reported_at}</td><td>${row.technology}</td><td>${row.location}</td><td>${priorityBadge(row.priority)}</td><td class="col-popis" title="${String(row.description || "").replaceAll('"',"'")}">${row.description}</td><td class="col-nahlasil" title="${String(row.reported_by || "").replaceAll('"',"'")}">${row.reported_by}</td><td>${statusBadge(row)}</td><td>${row.reacted_at || ""}</td><td>${row.solved_at || ""}</td><td class="col-solution">${row.solution || ""}</td></tr>`).join("") +
+        document.getElementById(id).innerHTML = "<thead><tr><th>Čas</th><th>Oddělení</th><th>Technologie</th><th>Místo</th><th>Priorita</th><th>Popis</th><th>Nahlásil</th><th>Stav</th><th>Reakce</th><th>Vyřešeno</th><th>Popis řešení</th></tr></thead><tbody>" +
+          rows.slice(0, 100).map((row) => `<tr class="${rowClass(row)}"><td>${row.reported_at}</td><td>${row.department || ""}</td><td>${row.technology}</td><td>${row.location}</td><td>${priorityBadge(row.priority)}</td><td class="col-popis" title="${String(row.description || "").replaceAll('"',"'")}">${row.description}</td><td class="col-nahlasil" title="${String(row.reported_by || "").replaceAll('"',"'")}">${row.reported_by}</td><td>${statusBadge(row)}</td><td>${row.reacted_at || ""}</td><td>${row.solved_at || ""}</td><td class="col-solution">${row.solution || ""}</td></tr>`).join("") +
           "</tbody>";
       }
       function priorityBadge(priority) {
@@ -996,26 +1605,32 @@
         return "";
       }
       function statusBadge(row) {
-        const cls = rowClass(row).replace("row-", "");
+        const cls = rowStatusClass(row).replace("row-", "");
         const label = row.status || "Nevyřešeno";
-        return `<span class="status-badge ${cls}">${label}</span>`;
+        return `<span class="status-badge ${cls}">${escapeHtml(label)}</span>`;
+      }
+      function rowStatusClass(row) {
+        const status = normalizedStatus(row);
+        return isSolvedTicket(row) ? "row-solved"
+          : isWaitingTicket(row) ? "row-waiting"
+          : isProgressTicket(row) ? "row-progress"
+          : "row-unresolved";
       }
       function rowClass(row) {
         const isSystemStop = String(row.technology || "").toLowerCase().includes("vypadek as");
-        const status = String(row.status || "").toLowerCase();
-        const statusClass = (status.includes("vyreseno") || status.includes("vyřešeno")) ? "row-solved"
-          : (status.includes("reseni") || status.includes("řešení")) ? "row-progress"
-          : "row-unresolved";
-        return isSystemStop ? `${statusClass} row-system-stop` : statusClass;
+        const classes = [rowStatusClass(row)];
+        if (isSystemStop) classes.push("row-system-stop");
+        if (row.reminded) classes.push("row-reminded");
+        return classes.join(" ");
       }
       function matchesSearch(row, query) {
         if (!query) return true;
-        return ["reported_at", "technology", "location", "priority", "description", "reported_by", "status", "solution"]
+        return ["reported_at", "department", "technology", "location", "priority", "description", "reported_by", "status", "solution"]
           .some((key) => String(row[key] || "").toLowerCase().includes(query));
       }
       function matchesMetricFilter(row) {
         if (!activeTableFilter || activeTableFilter === "all") return true;
-        return rowClass(row) === `row-${activeTableFilter}`;
+        return rowStatusClass(row) === `row-${activeTableFilter}`;
       }
       function renderOverdueTable(rows) {
         const el = document.getElementById("overdueRows");
@@ -1024,7 +1639,11 @@
           return;
         }
         el.innerHTML = "<thead><tr><th>Čas</th><th>Otevřeno</th><th>Technologie</th><th>Místo</th><th>Priorita</th><th>Stav</th><th>Popis</th><th>Připomenout</th></tr></thead><tbody>" +
-          rows.map((row, idx) => `<tr class="${rowClass(row)}"><td>${row.reported_at}</td><td><span class="overdue-badge">${row.hours_open}h</span></td><td>${row.technology}</td><td>${row.location}</td><td>${priorityBadge(row.priority)}</td><td><span style="font-size:11px;color:#6b7280">${row.status || '—'}</span></td><td class="col-popis" title="${String(row.description || "").replaceAll('"', "'")}">${row.description}</td><td><button class="remind-btn" id="remind-${idx}" onclick="sendReminder(${idx})">🔔 Připomenout</button></td></tr>`).join("") +
+          rows.map((row, idx) => {
+            const remindedLabel = row.reminded ? `<div class="reminded-flag">Připomenuto ${row.reminded_at || ""}</div>` : "";
+            const buttonText = row.reminded ? "Připomenuto" : "🔔 Připomenout";
+            return `<tr class="${rowClass(row)}"><td>${row.reported_at}</td><td><span class="overdue-badge">${row.hours_open}h</span></td><td>${row.technology}</td><td>${row.location}</td><td>${priorityBadge(row.priority)}</td><td><span style="font-size:11px;color:#6b7280">${row.status || '—'}</span>${remindedLabel}</td><td class="col-popis" title="${String(row.description || "").replaceAll('"', "'")}">${row.description}</td><td><button class="remind-btn ${row.reminded ? "sent" : ""}" id="remind-${idx}" onclick="sendReminder(${idx})" ${row.reminded ? "disabled" : ""}>${buttonText}</button></td></tr>`;
+          }).join("") +
           "</tbody>";
         el._rows = rows;
       }
@@ -1034,7 +1653,7 @@
         const row = table._rows[idx];
         const btn = document.getElementById(`remind-${idx}`);
         btn.disabled = true;
-        btn.textContent = "Odesílám...";
+        btn.textContent = "Ukládám...";
         try {
           const response = await fetch("/api/dashboard/remind", {
             method: "POST",
@@ -1042,8 +1661,12 @@
             body: JSON.stringify(row)
           });
           if (response.ok) {
-            btn.textContent = "✓ Odesláno";
+            btn.textContent = "Připomenuto";
             btn.classList.add("sent");
+            row.reminded = true;
+            row.reminded_at = new Date().toLocaleString("cs-CZ", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+            renderOverdueTable(table._rows);
+            if (ticketsLoaded) await loadTickets();
           } else {
             btn.textContent = "✗ Chyba";
             btn.disabled = false;
@@ -1064,7 +1687,7 @@
         document.getElementById("overdueCount").textContent = `${overdueRows.length} záznamů`;
         document.getElementById("overduePanel").classList.toggle("hidden", overdueRows.length === 0);
         const autoStopRows = dashboardRows.filter((row) => {
-          const t = (row.technology || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+          const t = (row.technology || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
           return t === "vypadek as" || t.includes("vypadek as") || t.includes("autostore vypadek");
         });
         renderTable("rows", visibleUnresolved);
@@ -1078,7 +1701,7 @@
         document.getElementById("activeFilterLabel").textContent = activeFilterText();
       }
       function activeFilterText() {
-        const labels = { solved: "Aktivní filtr: Vyřešeno", unresolved: "Aktivní filtr: Nevyřešeno", progress: "Aktivní filtr: V řešení" };
+        const labels = { solved: "Aktivní filtr: Vyřešeno", unresolved: "Aktivní filtr: Nevyřešeno", progress: "Aktivní filtr: V řešení", waiting: "Aktivní filtr: Čeká" };
         return labels[activeTableFilter] || "";
       }
       function exportCurrentCsv() {
@@ -1125,6 +1748,31 @@
       }
       document.getElementById("unresolvedSearch").oninput = applyTableFilters;
       document.getElementById("allRowsSearch").oninput = applyTableFilters;
+      document.getElementById("ticketsSearch").oninput = renderTickets;
+      document.getElementById("refreshTickets").onclick = loadTickets;
+      document.getElementById("ticketsTable").addEventListener("click", (event) => {
+        const toggle = event.target.closest("[data-ticket-toggle]");
+        if (toggle) {
+          toggleTicketDetail(toggle.dataset.ticketToggle);
+          return;
+        }
+        const statusButton = event.target.closest("[data-ticket-status]");
+        if (statusButton) {
+          updateTicketStatus(statusButton.dataset.ticketId, statusButton.dataset.ticketStatus, statusButton.dataset.ticketIndex);
+          return;
+        }
+        const deleteButton = event.target.closest("[data-ticket-delete]");
+        if (deleteButton) {
+          deleteTicket(deleteButton.dataset.ticketDelete);
+        }
+      });
+      document.querySelectorAll("[data-ticket-filter]").forEach((button) => {
+        button.onclick = () => {
+          ticketFilter = button.dataset.ticketFilter;
+          document.querySelectorAll("[data-ticket-filter]").forEach((item) => item.classList.toggle("active", item === button));
+          renderTickets();
+        };
+      });
       document.querySelector('[name="attachments"]').onchange = updateFilePreview;
       document.getElementById("clearMetricFilter").onclick = () => {
         activeTableFilter = "";
@@ -1218,21 +1866,21 @@
           const diff = parseFloat((a - b).toFixed(1));
           if (diff === 0) return `<span style="color:#64748b">= stejné</span>`;
           const up = diff > 0;
-          const isGood = (a < b); // lower is better for most metrics
+          const isGood = a < b;
           const color = isGood ? "#16a34a" : "#dc2626";
           const arrow = up ? "▲" : "▼";
           return `<span style="color:${color};font-size:12px">${arrow} ${Math.abs(diff)}</span>`;
         }
         const items = [
-          { label: "Celkem závad", curr: curr.total, prev: prev?.total, higherIsBad: true },
-          { label: "Nevyřešeno", curr: curr.unresolved, prev: prev?.unresolved, higherIsBad: true },
-          { label: "SLA splněno", curr: `${curr.sla} %`, prev: prev ? `${prev.sla} %` : null, raw: curr.sla, prevRaw: prev?.sla, higherIsBad: false },
-          { label: "Průměrná oprava", curr: curr.avg_repair !== null ? `${curr.avg_repair} min` : "-", prev: prev?.avg_repair !== null ? `${prev?.avg_repair} min` : "-", raw: curr.avg_repair, prevRaw: prev?.avg_repair, higherIsBad: true },
+          { label: "Celkem závad", curr: curr.total, prev: prev?.total },
+          { label: "Nové otevřené", curr: curr.unresolved, prev: prev?.unresolved },
+          { label: "V řešení", curr: curr.in_progress, prev: prev?.in_progress },
+          { label: "Čeká", curr: curr.waiting || 0, prev: prev?.waiting || 0 },
+          { label: "SLA splněno", curr: `${curr.sla} %`, prev: prev ? `${prev.sla} %` : null, raw: curr.sla, prevRaw: prev?.sla },
+          { label: "Průměrná oprava", curr: curr.avg_repair !== null ? `${curr.avg_repair} min` : "-", prev: prev?.avg_repair !== null ? `${prev?.avg_repair} min` : "-", raw: curr.avg_repair, prevRaw: prev?.avg_repair },
         ];
         document.getElementById("comparisonCards").innerHTML = items.map(item => {
-          const d = item.raw !== undefined
-            ? deltaPercent(item.raw, item.prevRaw)
-            : delta(item.curr, item.prev);
+          const d = item.raw !== undefined ? deltaPercent(item.raw, item.prevRaw) : delta(item.curr, item.prev);
           return `<div class="metric" style="display:flex;flex-direction:column;justify-content:center;gap:2px">
             <strong style="font-size:28px;line-height:1.1">${item.curr}</strong>
             <span style="color:#526074;font-size:14px;margin-top:2px">${item.label}</span>
@@ -1243,15 +1891,22 @@
           <span style="color:#94a3b8;font-size:13px">Srovnávací období</span>
         </div>`;
       }
-
       function renderRecurring(items) {
         const el = document.getElementById("recurringList");
         if (!items.length) { el.innerHTML = `<p class="muted">Žádné opakující se problémy v tomto období.</p>`; return; }
         const max = Math.max(...items.map(i => i.count));
-        el.innerHTML = `<div class="bar-list">${items.map(item => {
+        el.innerHTML = `<div class="recurring-grid">${items.map(item => {
           const width = Math.max(6, item.count / max * 100);
           const color = item.type === "Místo" ? "#dc2626" : "#f59e0b";
-          return `<div class="bar-row"><span title="${item.name}"><b style="font-size:10px;color:#94a3b8">${item.type}</b> ${item.name}</span><div class="bar-track"><div class="bar-fill" style="width:${width}%;background:${color}"></div></div><b>${item.count}×</b></div>`;
+          const icon = item.type === "Místo" ? "📍" : "🔧";
+          return `<article class="recurring-item" data-type="${item.type}" style="--accent:${color};--width:${width}%">
+            <div class="recurring-top">
+              <span class="recurring-type">${icon} ${item.type}</span>
+              <span class="recurring-count">${item.count}×</span>
+            </div>
+            <div class="recurring-name" title="${item.name}">${item.name}</div>
+            <div class="recurring-mini-track"><div class="recurring-mini-fill"></div></div>
+          </article>`;
         }).join("")}</div>`;
       }
 
@@ -1346,7 +2001,7 @@
           rows.map(row => {
             const nightBadge = row.night_shift
               ? `<span title="Nahlášeno ve večerních/nočních hodinách (18:00–06:00) — delší doba opravy je očekávatelná" style="display:inline-flex;align-items:center;gap:4px;background:#1e1b4b;color:#a5b4fc;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600;cursor:default">🌙 Noční</span>`
-              : `<span style="display:inline-flex;align-items:center;gap:4px;background:#f0fdf4;color:#15803d;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600">☀️ Denní</span>`;
+              : `<span style="display:inline-flex;align-items:center;gap:4px;background:#f0fdf4;color:#15803d;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600">Denní</span>`;
             const rowStyle = row.night_shift ? 'style="background:rgba(99,102,241,0.06)"' : '';
             return `<tr ${rowStyle}><td>${row.reported_at}</td><td>${row.technology}</td><td>${row.location}</td><td>${priorityBadge(row.priority)}</td><td>${nightBadge}</td><td><span style="color:#16a34a;font-weight:600">✔ Vyřešeno</span></td><td>${row.repair_min} min</td><td><span style="color:#dc2626;font-weight:800">+${row.over_by_min} min</span></td></tr>`;
           }).join("") +
@@ -1357,7 +2012,18 @@
         document.querySelector('[name="technology"]').onchange = updateCustomFields;
         updateCustomFields();
       });
+      refreshTicketsBadge();
       setTheme(localStorage.getItem("reportTheme") === "dark");
     </script>
   </body>
 </html>
+
+
+
+
+
+
+
+
+
+
