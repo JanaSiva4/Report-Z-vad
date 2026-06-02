@@ -86,6 +86,9 @@ def open_attachment(ticket_id: str, attachment_index: int, user: UserInfo = Depe
     local_path = str(attachment.get("local_path") or "")
     if local_path:
         return FileResponse(local_path, filename=str(attachment.get("name") or "priloha"))
+    external_url = str(attachment.get("url") or attachment.get("external_url") or "")
+    if external_url:
+        return RedirectResponse(external_url)
     return RedirectResponse(signed_attachment_url(attachment))
 
 

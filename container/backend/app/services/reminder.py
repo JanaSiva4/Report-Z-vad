@@ -7,6 +7,7 @@ def mark_ticket_reminded(row: dict, reminded_by: str = "") -> dict:
         "reminded": True,
         "reminded_at": reminded_at,
         "reminded_by": reminded_by,
+        "status": "Otevřené",
     }
     updated = update_ticket_by_id_or_teams_id(
         str(row.get("id") or ""),

@@ -6,6 +6,12 @@ import hashlib
 import io
 import re
 
+try:
+    from zoneinfo import ZoneInfo
+    PRAGUE_TZ = ZoneInfo("Europe/Prague")
+except Exception:
+    PRAGUE_TZ = timezone(timedelta(hours=2))
+
 import requests
 
 from app.config import settings
@@ -30,6 +36,39 @@ def _field(row: dict, *aliases: str) -> str:
     return ""
 
 
+def _decode_csv(content: bytes) -> str:
+    candidates = ("utf-8-sig", "cp1250", "cp852", "latin1")
+    expected = {
+        _norm("Oddělení"),
+        _norm("Technologie"),
+        _norm("Místo"),
+        _norm("Priorita"),
+        _norm("Popis"),
+        _norm("Nahlásil"),
+        _norm("Stav"),
+        _norm("Čas nahlášení"),
+    }
+    best_text = None
+    best_score = -1
+    for encoding in candidates:
+        try:
+            text = content.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+        try:
+            reader = csv.reader(io.StringIO(text))
+            header = next(reader, [])
+        except Exception:
+            continue
+        score = sum(1 for key in header if _norm(key) in expected)
+        if score > best_score:
+            best_text = text
+            best_score = score
+    if best_text is None:
+        best_text = content.decode("utf-8-sig", errors="replace")
+    return best_text
+
+
 def _parse_datetime(value: str):
     if not value:
         return None
@@ -47,7 +86,7 @@ def _parse_datetime(value: str):
         if parsed is None:
             return None
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone(timedelta(hours=1)))
+        parsed = parsed.replace(tzinfo=PRAGUE_TZ)
     return parsed
 
 
@@ -104,7 +143,7 @@ def _to_record(row: dict) -> dict:
 
 
 def import_csv_content(content: bytes) -> dict:
-    reader = csv.DictReader(io.StringIO(content.decode("utf-8-sig")))
+    reader = csv.DictReader(io.StringIO(_decode_csv(content)))
     imported = 0
     for row in reader:
         clean_row = {str(k).strip(): v for k, v in row.items() if k is not None}

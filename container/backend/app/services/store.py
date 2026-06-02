@@ -27,6 +27,7 @@ def _is_local_test_store() -> bool:
         os.getenv("LOCAL_TEST_MODE") == "1"
         or os.getenv("FIRESTORE_COLLECTION", "").startswith(LOCAL_TEST_PREFIX)
         or _tickets_collection().startswith(LOCAL_TEST_PREFIX)
+        or LOCAL_STORE_FILE.exists()
     )
 
 
@@ -52,7 +53,7 @@ def _local_read_all() -> list[dict[str, Any]]:
     if not LOCAL_STORE_FILE.exists():
         return []
     try:
-        data = json.loads(LOCAL_STORE_FILE.read_text(encoding="utf-8"))
+        data = json.loads(LOCAL_STORE_FILE.read_text(encoding="utf-8-sig"))
     except json.JSONDecodeError:
         return []
     return data if isinstance(data, list) else []
