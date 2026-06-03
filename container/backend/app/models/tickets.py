@@ -31,3 +31,11 @@ class TeamsReply(BaseModel):
     teams_id: str = Field(min_length=1)
     message: str = Field(min_length=1)
     author: str = ""
+
+
+class AutoStoreEmail(BaseModel):
+    subject: str = Field(min_length=1)
+    from_email: str = ""
+    text: str = ""
+    html: str = ""
+    received_at: str = ""

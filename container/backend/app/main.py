@@ -1,3 +1,5 @@
+import asyncio
+import logging
 import os
 
 emulator_host = os.getenv("FIRESTORE_EMULATOR_HOST", "")
@@ -10,7 +12,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from app.config import settings
 from app.routers.api import router as api_router
+from app.services.unify import sync_unify_events
+
+
+logger = logging.getLogger(__name__)
 
 
 app = FastAPI(title="Maintenance Helpdesk CZLC4")
@@ -44,3 +51,19 @@ app.include_router(api_router)
 static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
 if os.path.isdir(static_dir):
     app.mount("/", StaticFiles(directory=static_dir, html=True), name="frontend")
+
+
+async def _unify_poll_loop() -> None:
+    interval = max(int(settings.unify_poll_seconds or 60), 30)
+    while True:
+        try:
+            await asyncio.to_thread(sync_unify_events)
+        except Exception:
+            logger.exception("Uniify sync selhal.")
+        await asyncio.sleep(interval)
+
+
+@app.on_event("startup")
+async def start_unify_polling():
+    if settings.unify_api_url.strip() and settings.unify_api_token.strip():
+        app.state.unify_poll_task = asyncio.create_task(_unify_poll_loop())

@@ -8,9 +8,12 @@ from fastapi.responses import FileResponse, RedirectResponse
 from app.auth import UserInfo, get_current_user
 from app.config import settings
 from app.models.tickets import DashboardLogin, TeamsReply, TicketCreate, TicketUpdate
+from app.models.tickets import AutoStoreEmail
+from app.services.autostore import submit_autostore_email
 from app.services.attachments import signed_attachment_url
 from app.services.dashboard import load_dashboard, load_ticket_list
 from app.services.reminder import mark_ticket_reminded
+from app.services.unify import sync_unify_events
 from app.services.sheets_import import import_csv_content
 from app.services.shift_report import build_shift_summary
 from app.services.store import delete_ticket_record, get_ticket_record, update_ticket, update_ticket_by_teams_id
@@ -152,6 +155,20 @@ async def teams_reply(payload: TeamsReply, x_api_key: str = Header(default="")):
         raise HTTPException(status_code=404, detail="Zavada s timto Teams ID nebyla nalezena.")
 
     return {"status": "ok"}
+
+
+@router.post("/integrations/autostore-email")
+def autostore_email(payload: AutoStoreEmail, x_api_key: str = Header(default="")):
+    if settings.webhook_api_key and x_api_key != settings.webhook_api_key:
+        raise HTTPException(status_code=401, detail="Neplatny API klic.")
+    return submit_autostore_email(payload)
+
+
+@router.post("/integrations/unify-sync")
+def unify_sync(x_api_key: str = Header(default="")):
+    if settings.webhook_api_key and x_api_key != settings.webhook_api_key:
+        raise HTTPException(status_code=401, detail="Neplatny API klic.")
+    return sync_unify_events()
 
 
 @router.get("/reports/shift-summary")
