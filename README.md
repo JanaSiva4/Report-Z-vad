@@ -8,11 +8,12 @@ Projekt je pripraveny pro firemni Vibe Coding platformu. Puvodni Streamlit verze
 
 - Formular pro nahlaseni zavady vcetne oddeleni, technologie, mista, priority a popisu.
 - Ulozeni zavady do Firestore v GCP.
-- Odeslani dat do n8n pouze pro integrace, ktere aplikace nema delat primo, hlavne Teams a SharePoint.
+- Prilohy k zavade včetně nahledu obrazku primo v detailu.
 - Dashboard nad daty z backendu aplikace.
-- Prehled nevyresenych zavad a zavad v reseni.
+- Prehled nevyresenych zavad, zavad v reseni i vyresenych zavad.
 - Prehled vsech dat, grafy, filtry a export.
-- Sprava pripominek pres napojeny webhook.
+- Pripominky zavad otevrenych dele nez 24 hodin.
+- Automaticke tahani AutoStore/Uniify vypadku primo z API bez n8n a bez Teams.
 
 ## Nasazeni
 
@@ -27,7 +28,6 @@ Hlavni pozadavky platformy:
 - Dockerfile spousti `uvicorn`
 - projektova konfigurace je v `container/config.env`
 - strukturovana data zavad jsou ve Firestore
-- priloha/Teams/SharePoint integrace probiha pres n8n webhook
 
 ## Lokalni spusteni
 
@@ -61,54 +61,43 @@ Vyplnene hodnoty:
 - `GCP_PROJECT_ID`
 - `GCS_BUCKET`
 
+Volitelne hodnoty pro integrace:
+
+- `UNIFY_API_URL` - URL na Uniify/CubeAnalytics API, odkud aplikace pravidelne cte stop udalosti
+- `UNIFY_API_TOKEN` - API token pro Uniify/CubeAnalytics, predava se v hlavicce `API-Authorization: Token <token>`
+- `UNIFY_POLL_SECONDS` - interval v sekundach pro automaticky sync z Uniify API
+
 Service account se do `config.env` nedava. Platforma ho pouziva pri behu aplikace.
 
-Citlive hodnoty jako webhook URL, podpisove tokeny a hesla se do repozitare neukladaji. Aplikace je umi nacist z prostredi pri behu aplikace.
+Citlive hodnoty jako API tokeny a hesla se do repozitare neukladaji. Aplikace je umi nacist z prostredi pri behu aplikace.
 
-Runtime hodnoty mimo repozitar:
+## Uniify / AutoStore integrace
 
-- `WEBHOOK_URL` - n8n webhook pro Teams/SharePoint notifikaci po vytvoreni zavady
-- `WEBHOOK_API_KEY` - sdileny API klic mezi aplikaci a n8n; aplikace ho posila v hlavicce `X-API-Key` a stejny klic vyzaduje u callbacku z n8n
-- `DASHBOARD_PASSWORD` - docasne heslo dashboardu, pokud se nepouzije jen IAP/Alza prihlaseni
-- `TEAMS_REMINDER_WEBHOOK` - volitelny webhook pro pripominky do Teams
+Aplikace umi novy Uniify/AutoStore stop zpracovat primo z API bez n8n, bez Outlook workflow a bez Teams.
 
-Google Sheets uz nejsou primarni uloziste dat. Pokud se pouziji, tak jen docasne pro migraci nebo porovnani dat.
+Co je potreba:
 
-## n8n integrace
+1. doplnit `UNIFY_API_URL`
+2. doplnit `UNIFY_API_TOKEN`
+3. nechat behet aplikaci, aby si data sama stahovala v intervalech
 
-Aplikace vytvori zavadu ve Firestore a potom zavola n8n webhook. Payload obsahuje bezna pole formulare a `ticket_id`.
+Aplikace pak:
 
-n8n muze po odeslani Teams zpravy vratit JSON s `teams_id`, ktery si aplikace ulozi k zavade.
+- nacte data z Uniify API,
+- rozpozna `System Stop` i `Manual System Stop`,
+- zalozi z nich zavadu v aplikaci jako `AutoStore`,
+- a stejny vypadek nedeuplikuje.
 
-Pokud n8n sleduje odpovedi v Teams vlakne, muze poslat callback:
+Pro ručni test existuje i endpoint:
 
 ```text
-POST /api/integrations/teams-reply
+POST /api/integrations/unify-sync
 X-API-Key: <WEBHOOK_API_KEY>
 ```
 
-Body:
+## Odeslani ticketu
 
-```json
-{
-  "teams_id": "ID puvodni Teams zpravy",
-  "message": "text odpovedi z Teams",
-  "author": "jmeno autora"
-}
-```
-
-Backend podle textu doplni prvni reakci, stav `V reseni` nebo `Vyreseno` a popis reseni.
-
-## Napojeni denniho AI reportu
-
-Samostatny n8n workflow pro denni AI report muze misto Google Sheets cist souhrn z aplikace:
-
-```text
-GET /api/reports/shift-summary
-X-API-Key: <WEBHOOK_API_KEY>
-```
-
-Endpoint vraci JSON se souhrnem nocni smeny, denni smeny a hotovym textem v poli `text`. Tento vystup nahrazuje puvodni vetev `Google Sheets - poruchy`.
+Pri zalozeni zavady se ticket ulozi do Firestore a aplikace si ho sama zobrazi v seznamu i v dashboardu.
 
 ## Lokalni Google Cloud pristup
 
