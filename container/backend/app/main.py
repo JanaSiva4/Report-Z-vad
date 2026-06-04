@@ -14,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.routers.api import router as api_router
+from app.services.secret_manager import resolve_value
 from app.services.unify import sync_unify_events
 
 
@@ -65,5 +66,7 @@ async def _unify_poll_loop() -> None:
 
 @app.on_event("startup")
 async def start_unify_polling():
-    if settings.unify_api_url.strip() and settings.unify_api_token.strip():
+    unify_url = resolve_value(settings.unify_api_url, settings.unify_api_url_secret_name)
+    unify_token = resolve_value(settings.unify_api_token, settings.unify_api_token_secret_name)
+    if unify_url.strip() and unify_token.strip():
         app.state.unify_poll_task = asyncio.create_task(_unify_poll_loop())
