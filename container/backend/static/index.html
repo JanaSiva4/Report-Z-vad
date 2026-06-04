@@ -1007,6 +1007,7 @@
       let expandedTicketKey = "";
       let activeTableFilter = "";
       let managerPassword = "";
+      const ticketsLoadLimit = 1000;
       const maxAttachmentSize = 10 * 1024 * 1024;
       const allowedAttachmentTypes = ["image/jpeg", "image/png", "application/pdf"];
 
@@ -1190,7 +1191,7 @@
         ticketsLoading = true;
         setTicketsStatus("Načítám závady...");
         try {
-          const response = await fetchWithTimeout("/api/tickets?limit=300");
+          const response = await fetchWithTimeout(`/api/tickets?limit=${ticketsLoadLimit}`);
           const data = await response.json();
           if (!response.ok) throw new Error(data.detail || "Závady se nepodařilo načíst.");
           ticketsRows = data.rows || [];
@@ -1239,10 +1240,31 @@
         return !isSolvedTicket(row) && !isProgressTicket(row) && !isWaitingTicket(row);
       }
 
+      function issueSourceRows() {
+        const merged = new Map();
+        const addRows = (rows) => {
+          (rows || []).forEach((row, index) => {
+            const key = String(row?.id ?? `${row?.reported_at || "row"}:${row?.reported_by || ""}:${row?.description || ""}:${index}`);
+            if (!merged.has(key)) {
+              merged.set(key, row);
+              return;
+            }
+            const current = merged.get(key) || {};
+            merged.set(key, {
+              ...current,
+              ...row,
+              attachments: Array.isArray(row?.attachments) && row.attachments.length ? row.attachments : current.attachments || [],
+            });
+          });
+        };
+        addRows(dashboardRows);
+        addRows(ticketsRows);
+        return [...merged.values()];
+      }
+
       function ticketSourceRows() {
-        if (ticketsLoaded) return ticketsRows;
-        if (dashboardLoaded) return dashboardRows;
-        return ticketsRows.length ? ticketsRows : dashboardRows;
+        const rows = issueSourceRows();
+        return rows.length ? rows : (ticketsLoaded ? ticketsRows : dashboardRows);
       }
 
       function newTicketCount(rows = ticketSourceRows()) {
@@ -1259,13 +1281,15 @@
 
       async function refreshTicketsBadge() {
         try {
-          const response = await fetchWithTimeout("/api/tickets?limit=300", {}, 8000);
+          const response = await fetchWithTimeout(`/api/tickets?limit=${ticketsLoadLimit}`, {}, 8000);
           const data = await response.json();
           if (!response.ok) return;
           const rows = data.rows || [];
           updateTicketsBadge(rows);
           if (ticketsLoaded) {
             ticketsRows = rows;
+            renderTickets();
+          } else if (dashboardLoaded) {
             renderTickets();
           }
         } catch {
@@ -1284,7 +1308,7 @@
 
       function renderTickets() {
         const query = document.getElementById("ticketsSearch").value.trim().toLowerCase();
-        const rows = ticketsRows
+        const rows = issueSourceRows()
           .filter(ticketMatchesFilter)
           .filter((row) => matchesSearch(row, query));
         document.getElementById("ticketsCount").textContent = `${rows.length} závad`;
