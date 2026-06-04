@@ -999,8 +999,10 @@
       const ticketForm = document.getElementById("ticketForm");
       const ticketSuccess = document.getElementById("ticketSuccess");
       let dashboardRows = [];
+      let ticketsRows = [];
       let unresolvedRows = [];
       let ticketsLoaded = false;
+      let ticketsLoading = false;
       let ticketFilter = "open";
       let expandedTicketKey = "";
       let activeTableFilter = "";
@@ -1185,17 +1187,20 @@
       }
 
       async function loadTickets() {
+        ticketsLoading = true;
         setTicketsStatus("Načítám závady...");
         try {
           const response = await fetchWithTimeout("/api/tickets?limit=300");
           const data = await response.json();
           if (!response.ok) throw new Error(data.detail || "Závady se nepodařilo načíst.");
-          dashboardRows = data.rows;
-          updateTicketsBadge();
+          ticketsRows = data.rows || [];
+          updateTicketsBadge(ticketsRows);
           renderTickets();
           setTicketsStatus("");
         } catch (error) {
           setTicketsStatus(error.message, true);
+        } finally {
+          ticketsLoading = false;
         }
       }
 
@@ -1234,11 +1239,17 @@
         return !isSolvedTicket(row) && !isProgressTicket(row) && !isWaitingTicket(row);
       }
 
-      function newTicketCount(rows = dashboardRows) {
+      function ticketSourceRows() {
+        if (ticketsLoaded) return ticketsRows;
+        if (dashboardLoaded) return dashboardRows;
+        return ticketsRows.length ? ticketsRows : dashboardRows;
+      }
+
+      function newTicketCount(rows = ticketSourceRows()) {
         return rows.filter((row) => !isSolvedTicket(row) && !isProgressTicket(row) && !isWaitingTicket(row)).length;
       }
 
-      function updateTicketsBadge(rows = dashboardRows) {
+      function updateTicketsBadge(rows = ticketSourceRows()) {
         const badge = document.getElementById("ticketsBadge");
         const count = newTicketCount(rows);
         badge.textContent = count > 99 ? "99+" : String(count);
@@ -1251,9 +1262,10 @@
           const response = await fetchWithTimeout("/api/tickets?limit=300", {}, 8000);
           const data = await response.json();
           if (!response.ok) return;
-          updateTicketsBadge(data.rows || []);
+          const rows = data.rows || [];
+          updateTicketsBadge(rows);
           if (ticketsLoaded) {
-            dashboardRows = data.rows || [];
+            ticketsRows = rows;
             renderTickets();
           }
         } catch {
@@ -1272,11 +1284,15 @@
 
       function renderTickets() {
         const query = document.getElementById("ticketsSearch").value.trim().toLowerCase();
-        const rows = dashboardRows
+        const rows = ticketsRows
           .filter(ticketMatchesFilter)
           .filter((row) => matchesSearch(row, query));
         document.getElementById("ticketsCount").textContent = `${rows.length} závad`;
         const el = document.getElementById("ticketsTable");
+        if (ticketsLoading && !rows.length) {
+          el.innerHTML = `<tbody><tr><td class="empty-state" colspan="10">Načítám závady...</td></tr></tbody>`;
+          return;
+        }
         if (!rows.length) {
           el.innerHTML = `<tbody><tr><td class="empty-state" colspan="10">Žádné závady pro tento filtr.</td></tr></tbody>`;
           return;
@@ -1284,7 +1300,16 @@
         el.innerHTML = "<thead><tr><th>Čas</th><th>Oddělení</th><th>Technologie</th><th>Místo</th><th>Priorita</th><th>Popis</th><th>Nahlásil</th><th>Stav</th><th>Časy</th><th>Akce</th></tr></thead><tbody>" +
           rows.slice(0, 200).map((row, idx) => {
             const ticketId = String(row.id ?? "");
-            const ticketKey = `${ticketId || "row"}:${idx}`;
+            const ticketKey = [
+              ticketId || "row",
+              row.reported_at || "",
+              row.reported_by || "",
+              row.technology || "",
+              row.location || "",
+              row.description || "",
+              row.status || "",
+              idx
+            ].join("|");
             const solved = isSolvedTicket(row);
             const progress = isProgressTicket(row);
             const waiting = isWaitingTicket(row);
@@ -1377,7 +1402,7 @@
           setTicketsStatus(data.detail || "Závadu se nepodařilo smazat.", true);
           return;
         }
-        if (expandedTicketKey.startsWith(`${ticketId}:`)) expandedTicketKey = "";
+        expandedTicketKey = "";
         await loadTickets();
         if (dashboardLoaded) await loadDashboard();
       }
