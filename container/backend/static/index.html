@@ -1283,18 +1283,19 @@
         }
         el.innerHTML = "<thead><tr><th>Čas</th><th>Oddělení</th><th>Technologie</th><th>Místo</th><th>Priorita</th><th>Popis</th><th>Nahlásil</th><th>Stav</th><th>Časy</th><th>Akce</th></tr></thead><tbody>" +
           rows.slice(0, 200).map((row, idx) => {
+            const ticketId = String(row.id ?? "");
             const solved = isSolvedTicket(row);
             const progress = isProgressTicket(row);
             const waiting = isWaitingTicket(row);
             const safeSolution = escapeHtml(row.solution);
-            const isExpanded = expandedTicketId === row.id;
+            const isExpanded = expandedTicketId === ticketId;
             const attachments = renderTicketAttachments(row);
             const statusButtons = solved ? "" : [
-              !progress && !waiting ? `<button type="button" data-ticket-status="V řešení" data-ticket-id="${escapeHtml(row.id)}" data-ticket-index="${idx}">Převzít</button>` : "",
-              !waiting ? `<button type="button" data-ticket-status="Čeká" data-ticket-id="${escapeHtml(row.id)}" data-ticket-index="${idx}">Čeká</button>` : "",
-              `<button class="primary" type="button" data-ticket-status="Vyřešeno" data-ticket-id="${escapeHtml(row.id)}" data-ticket-index="${idx}">Vyřešit</button>`
+              !progress && !waiting ? `<button type="button" data-ticket-status="V řešení" data-ticket-id="${escapeHtml(ticketId)}" data-ticket-index="${idx}">Převzít</button>` : "",
+              !waiting ? `<button type="button" data-ticket-status="Čeká" data-ticket-id="${escapeHtml(ticketId)}" data-ticket-index="${idx}">Čeká</button>` : "",
+              `<button class="primary" type="button" data-ticket-status="Vyřešeno" data-ticket-id="${escapeHtml(ticketId)}" data-ticket-index="${idx}">Vyřešit</button>`
             ].join("");
-            const deleteButton = `<button class="danger-inline" type="button" data-ticket-delete="${escapeHtml(row.id)}">Smazat závadu</button>`;
+            const deleteButton = `<button class="danger-inline" type="button" data-ticket-delete="${escapeHtml(ticketId)}">Smazat závadu</button>`;
             const actionButtons = `${statusButtons}${solved ? `<span class="muted">Závada je uzavřená.</span>` : ""}${deleteButton}`;
             return `<tr class="${rowClass(row)}">
               <td>${row.reported_at}</td>
@@ -1307,7 +1308,7 @@
               <td>${statusBadge(row)}</td>
               <td><small>Reakce: ${row.reacted_at || "-"}<br>Vyřešeno: ${row.solved_at || "-"}</small></td>
               <td class="ticket-action-cell">
-                <button class="ticket-open-action" type="button" data-ticket-toggle="${escapeHtml(row.id)}">${isExpanded ? "zavřít" : "řešit"}</button>
+                <button class="ticket-open-action" type="button" data-ticket-toggle="${escapeHtml(ticketId)}">${isExpanded ? "zavřít" : "řešit"}</button>
               </td>
             </tr>
             <tr class="ticket-detail-row ${isExpanded ? "" : "hidden"}">
@@ -1381,9 +1382,18 @@
       }
 
       function toggleTicketDetail(ticketId) {
-        expandedTicketId = expandedTicketId === ticketId ? "" : ticketId;
+        const normalizedTicketId = String(ticketId ?? "");
+        expandedTicketId = expandedTicketId === normalizedTicketId ? "" : normalizedTicketId;
         renderTickets();
         setTicketsStatus(expandedTicketId ? "Detail závady je otevřený." : "");
+        if (expandedTicketId) {
+          window.requestAnimationFrame(() => {
+            const detailRow = document.querySelector(`tr.ticket-detail-row:not(.hidden)`);
+            if (detailRow && detailRow.scrollIntoView) {
+              detailRow.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+          });
+        }
       }
       document.getElementById("refreshDashboard").onclick = () => {
         loadDashboard();
