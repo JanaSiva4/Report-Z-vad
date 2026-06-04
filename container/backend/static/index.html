@@ -1244,7 +1244,7 @@
         const merged = new Map();
         const addRows = (rows) => {
           (rows || []).forEach((row, index) => {
-            const key = String(row?.id ?? `${row?.reported_at || "row"}:${row?.reported_by || ""}:${row?.description || ""}:${index}`);
+            const key = ticketRowKey(row, index);
             if (!merged.has(key)) {
               merged.set(key, row);
               return;
@@ -1260,6 +1260,10 @@
         addRows(dashboardRows);
         addRows(ticketsRows);
         return [...merged.values()];
+      }
+
+      function ticketRowKey(row, fallbackIndex = 0) {
+        return String(row?.id ?? `${row?.reported_at || "row"}:${row?.reported_by || ""}:${row?.technology || ""}:${row?.location || ""}:${row?.description || ""}:${fallbackIndex}`);
       }
 
       function ticketSourceRows() {
@@ -1324,16 +1328,7 @@
         el.innerHTML = "<thead><tr><th>Čas</th><th>Oddělení</th><th>Technologie</th><th>Místo</th><th>Priorita</th><th>Popis</th><th>Nahlásil</th><th>Stav</th><th>Časy</th><th>Akce</th></tr></thead><tbody>" +
           rows.slice(0, 200).map((row, idx) => {
             const ticketId = String(row.id ?? "");
-            const ticketKey = [
-              ticketId || "row",
-              row.reported_at || "",
-              row.reported_by || "",
-              row.technology || "",
-              row.location || "",
-              row.description || "",
-              row.status || "",
-              idx
-            ].join("|");
+            const ticketKey = ticketRowKey(row, idx);
             const solved = isSolvedTicket(row);
             const progress = isProgressTicket(row);
             const waiting = isWaitingTicket(row);
