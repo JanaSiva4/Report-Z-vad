@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     gcs_bucket: str = Field(default="", alias="GCS_BUCKET")
     unify_api_url: str = Field(default="", alias="UNIFY_API_URL")
     unify_api_token: str = Field(default="", alias="UNIFY_API_TOKEN")
+    unify_api_url_secret_name: str = Field(default="UNIFY_API_URL", alias="UNIFY_API_URL_SECRET_NAME")
+    unify_api_token_secret_name: str = Field(default="UNIFY_API_TOKEN", alias="UNIFY_API_TOKEN_SECRET_NAME")
     unify_poll_seconds: int = Field(default=60, alias="UNIFY_POLL_SECONDS")
     apps_script_url: str = Field(default="", alias="APPS_SCRIPT_URL")
     webhook_url: str = Field(default="", alias="WEBHOOK_URL")

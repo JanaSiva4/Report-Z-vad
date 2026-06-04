@@ -11,6 +11,7 @@ import requests
 from fastapi import HTTPException
 
 from app.config import settings
+from app.services.secret_manager import resolve_value
 from app.services.store import get_ticket_record, update_ticket, upsert_ticket_record
 
 
@@ -172,18 +173,20 @@ def _ticket_payload(event: dict[str, Any]) -> dict[str, Any]:
 
 
 def fetch_unify_payload() -> Any:
-    if not settings.unify_api_url:
+    api_url = resolve_value(settings.unify_api_url, settings.unify_api_url_secret_name)
+    api_token = resolve_value(settings.unify_api_token, settings.unify_api_token_secret_name)
+    if not api_url:
         raise ValueError("UNIFY_API_URL neni nakonfigurovany.")
-    if not settings.unify_api_token:
+    if not api_token:
         raise ValueError("UNIFY_API_TOKEN neni nakonfigurovany.")
 
     headers = {
-        "API-Authorization": f"Token {settings.unify_api_token.strip()}",
+        "API-Authorization": f"Token {api_token}",
         "Accept": "application/json",
     }
     session = requests.Session()
     session.trust_env = False
-    response = session.get(settings.unify_api_url.strip(), headers=headers, timeout=45)
+    response = session.get(api_url, headers=headers, timeout=45)
     response.raise_for_status()
     try:
         return response.json()
