@@ -122,10 +122,15 @@ def _to_record(row: dict) -> dict:
     reported_at = _iso_or_none(_field(row, "Čas nahlášení", "Cas nahlaseni"))
     reacted_at = _iso_or_none(_field(row, "Čas reakce", "Cas reakce"))
     solved_at = _iso_or_none(_field(row, "Čas vyřešení", "Cas vyreseni"))
-    created_at = reported_at or datetime.utcnow()
+    created_at = reported_at or datetime.now(PRAGUE_TZ)
+    attachment = _field(row, "Příloha", "Priloha")
+    attachments = [attachment] if attachment else []
+    technician = _field(row, "Technik", "Technician")
     return {
         "source": "google-sheets-import",
+        "id": _field(row, "ID", "Id", "Ticket ID"),
         "created_at": created_at,
+        "updated_at": created_at,
         "reacted_at": reacted_at,
         "solved_at": solved_at,
         "department": _field(row, "Oddělení", "Oddeleni"),
@@ -138,7 +143,9 @@ def _to_record(row: dict) -> dict:
         "status": _field(row, "Stav", "Status"),
         "solution": _field(row, "Popis řešení", "Popis reseni"),
         "teams_id": _field(row, "ID Teams", "IDTeams"),
-        "attachment": _field(row, "Příloha", "Priloha"),
+        "technician": technician,
+        "attachments": attachments,
+        "attachment": attachment,
     }
 
 

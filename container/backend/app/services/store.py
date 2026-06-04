@@ -22,6 +22,78 @@ def _tickets_collection() -> str:
     return settings.firestore_collection.strip() or "tickets"
 
 
+def _parse_datetime(value: Any) -> datetime | None:
+    if isinstance(value, datetime):
+        return value
+    if not isinstance(value, str):
+        return None
+    text = value.strip()
+    if not text:
+        return None
+    try:
+        return datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _record_created_at(record: dict[str, Any]) -> datetime:
+    for key in ("created_at", "reported_at", "updated_at", "solved_at", "reacted_at"):
+        parsed = _parse_datetime(record.get(key))
+        if parsed is not None:
+            return parsed
+    return utc_now()
+
+
+def _normalize_ticket_record(record: dict[str, Any], ticket_id: str | None = None) -> dict[str, Any]:
+    data = dict(record or {})
+    data.pop("row_number", None)
+
+    if ticket_id:
+        data.setdefault("id", ticket_id)
+
+    if "attachment" in data and "attachments" not in data:
+        attachment = data.pop("attachment")
+        if isinstance(attachment, list):
+            data["attachments"] = attachment
+        elif str(attachment or "").strip():
+            url = str(attachment).strip()
+            data["attachments"] = [{
+                "name": url.rstrip("/").split("/")[-1] or "priloha",
+                "url": url,
+                "external_url": url,
+            }]
+
+    if not isinstance(data.get("attachments"), list):
+        data["attachments"] = []
+
+    data.setdefault("status", "")
+    data.setdefault("teams_id", "")
+    data.setdefault("source", "app")
+    data.setdefault("technician", "")
+    data.setdefault("solution", "")
+    data.setdefault("note", "")
+    data.setdefault("reported_by", "")
+    data.setdefault("department", "")
+    data.setdefault("technology", "")
+    data.setdefault("location", "")
+    data.setdefault("priority", "")
+    data.setdefault("reacted_at", None)
+    data.setdefault("solved_at", None)
+    if not data.get("created_at"):
+        data["created_at"] = _record_created_at(data)
+    if not data.get("updated_at"):
+        data["updated_at"] = data["created_at"]
+    return data
+
+
+def _sort_value(record: dict[str, Any]) -> datetime:
+    for key in ("created_at", "updated_at", "reported_at", "solved_at", "reacted_at"):
+        parsed = _parse_datetime(record.get(key))
+        if parsed is not None:
+            return parsed
+    return datetime.min.replace(tzinfo=timezone.utc)
+
+
 def _is_local_test_store() -> bool:
     return (
         os.getenv("LOCAL_TEST_MODE") == "1"
@@ -65,6 +137,7 @@ def _local_write_all(rows: list[dict[str, Any]]) -> None:
 
 
 def _local_upsert(record: dict[str, Any], merge: bool = False) -> None:
+    record = _normalize_ticket_record(record, str(record.get("id") or ""))
     rows = _local_read_all()
     for index, row in enumerate(rows):
         if row.get("id") == record["id"]:
@@ -78,7 +151,7 @@ def _local_upsert(record: dict[str, Any], merge: bool = False) -> None:
 def _local_get(ticket_id: str) -> dict[str, Any]:
     for row in _local_read_all():
         if row.get("id") == ticket_id:
-            return row
+            return _normalize_ticket_record(row, ticket_id)
     raise HTTPException(status_code=404, detail="Zavada nebyla nalezena.")
 
 
@@ -88,7 +161,8 @@ def _local_delete(ticket_id: str) -> None:
 
 
 def _local_list(limit: int = 1000) -> list[dict[str, Any]]:
-    rows = sorted(_local_read_all(), key=lambda item: str(item.get("created_at") or ""), reverse=True)
+    rows = [_normalize_ticket_record(row, str(row.get("id") or "")) for row in _local_read_all()]
+    rows = sorted(rows, key=_sort_value, reverse=True)
     return rows[:limit]
 
 
@@ -105,8 +179,10 @@ def create_ticket_record(data: dict[str, Any]) -> dict[str, Any]:
         "reacted_at": None,
         "solved_at": None,
         "solution": "",
+        "technician": data.get("technician") or "",
         "source": data.get("source") or "app",
     }
+    record = _normalize_ticket_record(record, ticket_id)
     if _is_local_test_store():
         _local_upsert(record)
         return record
@@ -123,6 +199,7 @@ def upsert_ticket_record(ticket_id: str, data: dict[str, Any]) -> None:
         "id": ticket_id,
         "updated_at": now,
     }
+    record = _normalize_ticket_record(record, ticket_id)
     if _is_local_test_store():
         _local_upsert(record, merge=True)
         return
@@ -208,7 +285,7 @@ def get_ticket_record(ticket_id: str) -> dict[str, Any]:
         raise HTTPException(status_code=404, detail="Zavada nebyla nalezena.")
     data = snapshot.to_dict() or {}
     data.setdefault("id", snapshot.id)
-    return data
+    return _normalize_ticket_record(data, snapshot.id)
 
 
 def delete_ticket_record(ticket_id: str) -> None:
@@ -230,22 +307,44 @@ def delete_ticket_record(ticket_id: str) -> None:
     ref.delete()
 
 
+def clear_ticket_records() -> int:
+    if _is_local_test_store():
+        rows = _local_read_all()
+        for row in rows:
+            attachments = row.get("attachments") if isinstance(row.get("attachments"), list) else []
+            delete_stored_attachments(attachments)
+        _local_write_all([])
+        return len(rows)
+
+    db = _client()
+    docs = list(db.collection(_tickets_collection()).stream())
+    deleted = 0
+    batch = db.batch()
+    batch_count = 0
+    for doc in docs:
+        data = doc.to_dict() or {}
+        attachments = data.get("attachments") if isinstance(data.get("attachments"), list) else []
+        delete_stored_attachments(attachments)
+        batch.delete(doc.reference)
+        batch_count += 1
+        deleted += 1
+        if batch_count >= 400:
+            batch.commit()
+            batch = db.batch()
+            batch_count = 0
+    if batch_count:
+        batch.commit()
+    return deleted
+
+
 def list_ticket_records(limit: int = 1000) -> list[dict[str, Any]]:
     if _is_local_test_store():
         return _local_list(limit=limit)
 
-    from google.cloud import firestore
-
     db = _client()
-    docs = (
-        db.collection(_tickets_collection())
-        .order_by("created_at", direction=firestore.Query.DESCENDING)
-        .limit(limit)
-        .stream()
-    )
     rows: list[dict[str, Any]] = []
-    for doc in docs:
+    for doc in db.collection(_tickets_collection()).stream():
         data = doc.to_dict() or {}
-        data.setdefault("id", doc.id)
-        rows.append(data)
+        rows.append(_normalize_ticket_record(data, doc.id))
+    rows.sort(key=_sort_value, reverse=True)
     return rows
